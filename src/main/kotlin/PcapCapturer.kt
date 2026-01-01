@@ -5,13 +5,11 @@ import org.pcap4j.core.PacketListener
 import org.pcap4j.core.PcapNativeException;
 import org.pcap4j.core.PcapNetworkInterface
 import org.pcap4j.core.Pcaps
-import org.pcap4j.packet.Packet
 import org.pcap4j.packet.TcpPacket
 import org.pcap4j.util.ByteArrays
-import java.util.*
 import kotlin.system.exitProcess
 
-object PcapHandler {
+object PcapCapturer {
 
     private val SERVER_IP = PropertyHandler.getProperty("server.ip")
     private val SERVER_PORT = PropertyHandler.getProperty("server.port")
