@@ -17,36 +17,28 @@
   </head>
 
   <body>
-    <div
-      class="meter"
-      id="meter">
+    <div class="meter">
       <div class="header">
         <div class="bossIcon">
-          <img src="./owl.ico" />
+          <img src="./logo.png" />
         </div>
-        <div
-          class="bossName"
-          id="bossName">
-          흑풍마녀
+        <div class="bossNames">
+          <span class="bossName"></span>
+          <!-- 흑풍마녀 -->
         </div>
         <div class="headerBtns">
-          <btn id="resetBtn"><i data-lucide="rotate-ccw"></i> </btn>
-          <btn
-            class="collapseBtn"
-            id="collapseBtn">
+          <div class="headerBtn resetBtn"><i data-lucide="rotate-ccw"></i></div>
+          <div class="headerBtn collapseBtn">
             <i
               class="collapseIcon"
-              id="collapseIcon"
               data-lucide="arrow-up-wide-narrow"></i>
-          </btn>
+          </div>
         </div>
       </div>
 
+      <div class="list"></div>
       <div
-        class="list"
-        id="list"></div>
-      <div
-        id="console"
+        class="console"
         style="
           position: fixed;
           bottom: 0;
@@ -63,29 +55,18 @@
         "></div>
     </div>
 
-    <div
-      class="overlay"
-      id="overlay">
+    <div class="overlay">
       <div
         class="detailsPanel"
-        id="detailsPanel"
         role="dialog"
         aria-modal="true">
         <div class="detailsHeader">
-          <div id="detailsTitle">상세</div>
-          <div
-            class="closeX"
-            id="detailsClose">
-            ×
-          </div>
+          <div class="detailsTitle">상세</div>
+          <div class="closeX detailsClose">×</div>
         </div>
 
-        <div
-          class="detailsBody"
-          id="detailsBody">
-          <div
-            class="detailsStats"
-            id="detailsStats"></div>
+        <div class="detailsBody">
+          <div class="detailsStats"></div>
 
           <div class="detailsSkills">
             <div class="skillHeader">
@@ -93,9 +74,7 @@
               <div class="cell cast right">시전 횟수 (치명)</div>
               <div class="cell dmg">누적 피해량</div>
             </div>
-            <div
-              class="skills"
-              id="skillsList"></div>
+            <div class="skills"></div>
           </div>
         </div>
       </div>
@@ -104,19 +83,19 @@
     <script>
       lucide.createIcons();
 
-      const elList = document.getElementById("list");
-      const elBossName = document.getElementById("bossName");
+      const elList = document.querySelector(".list");
+      const elBossName = document.querySelector(".bossName");
 
-      const overlay = document.getElementById("overlay");
-      const detailsClose = document.getElementById("detailsClose");
-      const detailsTitle = document.getElementById("detailsTitle");
+      const overlay = document.querySelector(".overlay");
+      const detailsClose = document.querySelector(".detailsClose");
+      const detailsTitle = document.querySelector(".detailsTitle");
 
-      const resetBtn = document.getElementById("resetBtn");
-      const collapseBtn = document.getElementById("collapseBtn");
-      const collapseIcon = document.getElementById("collapseIcon");
+      const resetBtn = document.querySelector(".resetBtn");
+      const collapseBtn = document.querySelector(".collapseBtn");
+      const collapseIcon = document.querySelector(".collapseIcon");
 
-      const detailsStatsEl = document.getElementById("detailsStats");
-      const skillsListEl = document.getElementById("skillsList");
+      const detailsStatsEl = document.querySelector(".detailsStats");
+      const skillsListEl = document.querySelector(".skills");
 
       const dpsFormatter = new Intl.NumberFormat("ko-KR");
 
@@ -471,7 +450,7 @@
         renderRows(display);
       };
 
-      elBossName.textContent = "루드라";
+      elBossName.textContent = "DPS METER";
       fetchDps();
       setInterval(fetchDps, POLL_MS);
 
@@ -513,7 +492,7 @@
           return;
         }
 
-        const consoleDiv = document.getElementById("console");
+        const consoleDiv = document.querySelector(".console");
         if (window.dpsData.isDebuggingMode()) {
           consoleDiv.style.display = "block";
           const originalLog = console.log;

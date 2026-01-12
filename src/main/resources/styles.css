@@ -14,9 +14,6 @@
 
   --panel-border: rgba(255, 255, 255, 0.12);
   --title: rgba(235, 245, 255, 0.95);
-
-  /* ✅ 스킬 게이지(오른쪽) 색감 */
-  --skill-bar-bg: rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -28,8 +25,7 @@
 }
 
 .meter {
-  width: 280px;
-  padding: 12px;
+  width: 320px;
 
   backdrop-filter: blur(1px) saturate(180%);
   background-color: rgba(255, 255, 255, 0.1);
@@ -40,23 +36,27 @@
 .header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  align-content: center;
+  gap: 16px;
+  padding: 8px 12px;
   .bossIcon {
-    width: 36px;
-    height: 36px;
-
+    display: flex;
+    align-items: center;
+    width: 88px;
     img {
       width: 100%;
-      height: 100%;
     }
   }
 
-  .bossName {
+  .bossNames {
     flex: 1;
     color: var(--text-color);
     text-shadow: var(--text-shadow);
     font-weight: bold;
-    font-size: 22px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
   }
 
   .headerBtns {
@@ -67,24 +67,29 @@
     gap: 8px;
     text-shadow: var(--text-shadow);
     cursor: pointer;
+    .headerBtn {
+      display: flex;
+      align-items: center;
+      width: 20px;
+      height: 20px;
+    }
   }
 }
 
 .list {
   display: grid;
   gap: 4px;
-
+  padding: 0px 12px;
   .item {
     position: relative;
     height: 32px;
+    margin-bottom: 12px;
     padding: 0 8px;
     border-radius: var(--rounded-xs);
     overflow: hidden;
     background: rgba(0, 0, 0, 0.3);
   }
-  .item:first-child {
-    margin-top: 12px;
-  }
+
   .item.isUser {
     cursor: pointer;
   }
