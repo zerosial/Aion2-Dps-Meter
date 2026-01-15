@@ -2,6 +2,7 @@ package com.tbread
 
 import com.tbread.entity.DpsData
 import com.tbread.entity.JobClass
+import com.tbread.entity.PersonalData
 import com.tbread.entity.TargetInfo
 import kotlinx.coroutines.Job
 
@@ -26,7 +27,8 @@ class DpsCalculator(private val dataStorage: DataStorage) {
             3450
         )
 
-    private val SKILL_CODES: IntArray = intArrayOf(9952, 60832, 33872, 19216,53136,36176,5648,16912).apply { sort() }
+    private val SKILL_CODES: IntArray =
+        intArrayOf(9952, 60832, 33872, 19216, 53136, 36176, 5648, 16912).apply { sort() }
 
     private val targetInfoMap = hashMapOf<Int, TargetInfo>()
 
@@ -68,19 +70,20 @@ class DpsCalculator(private val dataStorage: DataStorage) {
         pdpMap[currentTarget]!!.forEach lastPdpLoop@{ pdp ->
             val nickname = nicknameData[pdp.getActorId()] ?: nicknameData[dataStorage.getSummonData()[pdp.getActorId()]
                 ?: return@lastPdpLoop] ?: return@lastPdpLoop
-            dpsData.map.merge(nickname, pdp.getDamage().toDouble(), Double::plus)
-            if (!dpsData.classMap.containsKey(nickname)) {
+            if (!dpsData.map.containsKey(nickname)) {
+                dpsData.map[nickname] = PersonalData()
+            }
+            dpsData.map[nickname]!!.addDamage(pdp.getDamage().toDouble())
+            if (dpsData.map[nickname]!!.job == "") {
                 val origSkillCode = inferOriginalSkillCode(pdp.getSkillCode1()) ?: -1
                 val job = JobClass.convertFromSkill(origSkillCode)
                 if (job != null) {
-                    dpsData.classMap[nickname] = job.className
+                    dpsData.map[nickname]!!.job = job.className
                 }
             }
-
-
         }
-        dpsData.map.forEach { (name, damage) ->
-            dpsData.map[name] = damage / battleTime * 1000
+        dpsData.map.forEach { (_, data) ->
+            data.dps = data.amount / battleTime * 1000
         }
         return dpsData
     }
