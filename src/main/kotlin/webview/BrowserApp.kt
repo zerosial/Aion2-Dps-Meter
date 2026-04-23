@@ -384,12 +384,18 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         val GWL_EXSTYLE = -20
         val WS_EX_TOOLWINDOW = 0x00000080
         val WS_EX_APPWINDOW = 0x00040000
+        val SWP_NOMOVE = 0x0002
+        val SWP_NOSIZE = 0x0001
+        val SWP_NOZORDER = 0x0004
+        val SWP_FRAMECHANGED = 0x0020
         val user32 = User32.INSTANCE
         val hwnd = user32.FindWindow(null, title) ?: return
         val exStyle = user32.GetWindowLong(hwnd, GWL_EXSTYLE)
         user32.SetWindowLong(hwnd, GWL_EXSTYLE,
             (exStyle or WS_EX_TOOLWINDOW) and WS_EX_APPWINDOW.inv()
         )
+        user32.SetWindowPos(hwnd, null, 0, 0, 0, 0,
+            SWP_NOMOVE or SWP_NOSIZE or SWP_NOZORDER or SWP_FRAMECHANGED)
     }
 
     private fun setupTray(stage: Stage) {
