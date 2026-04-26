@@ -14,7 +14,7 @@ import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
 
 interface Props {
   // isCollapse: boolean;
-  reset: () => void;
+  // reset: () => void;
   setSettings: (value: PanelType) => void;
   // toggleCollapse: () => void;
   className: string;

@@ -106,7 +106,9 @@ export const SettingsPanel = ({
     // setShowPower,
   } = useSettingsStore();
 
-  const { pending, start, stop, reset } = useHotkeyCapture(hotkey);
+  // const { pending,
+  //   //  start, stop,
+  //    reset } = useHotkeyCapture(hotkey);
   const {
     pending: pendingHide,
     start: startHide,
@@ -144,7 +146,7 @@ export const SettingsPanel = ({
   };
 
   const handleSave = () => {
-    setHotkey(pending);
+    // setHotkey(pending);
     setHideHotkey(pendingHide);
     onClose();
   };
@@ -158,7 +160,7 @@ export const SettingsPanel = ({
     setShowCombatTimerInMinimal(snapshot.showCombatTimerInMinimal);
     setShowTargetInfoInMinimal(snapshot.showTargetInfoInMinimal);
     setHotkey(snapshot.hotkey);
-    reset(snapshot.hotkey);
+    // reset(snapshot.hotkey);
     resetHide(snapshot.hideHotkey);
     setHeaderPosition(snapshot.headerPosition);
     setTheme(snapshot.theme as ThemeColors);
@@ -258,7 +260,7 @@ export const SettingsPanel = ({
           <div className="flex-1 h-px bg-white/10" />
         </div>
         <SettingsItem>
-          <SettingsRow
+          {/* <SettingsRow
             title="새로고침"
             align="center"
             rightClassName="w-44">
@@ -269,7 +271,7 @@ export const SettingsPanel = ({
               value={formatHotkey(pending.modifiers, pending.vkCode)}
               className="cursor-pointer"
             />
-          </SettingsRow>
+          </SettingsRow> */}
 
           <SettingsRow
             title="최소화"

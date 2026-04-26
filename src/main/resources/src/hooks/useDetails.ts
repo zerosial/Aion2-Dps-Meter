@@ -1,5 +1,5 @@
 import type { Player, Skill, Details, BuffEntry } from "@/types";
-// import { useDebugStore } from "../stores/debugStore";
+import { useDebugStore } from "../stores/debugStore";
 
 export const useDetails = () => {
   const getDetails = async (
@@ -7,7 +7,7 @@ export const useDetails = () => {
     combatTime: string = "00:00",
     historyIdx?: number,
   ): Promise<Details> => {
-    // const addLog = useDebugStore.getState().addLog;
+    const addLog = useDebugStore.getState().addLog;
 
     const raw =
       historyIdx !== undefined
@@ -22,9 +22,9 @@ export const useDetails = () => {
         ? await window.javaBridge?.getBossBuffOperatingRate?.(historyIdx)
         : await window.javaBridge?.getLiveBossBuffOperatingRate?.();
 
-    // addLog(`${historyIdx ? `히스토리 디테일 ${raw}` : `일반 detail rowID${row.id} ${raw}`}`);
-    // addLog(`${historyIdx ? ` ${buffRaw}` : `일반 detail rowID${row.id} ${buffRaw}`}`);
-    // addLog(`${historyIdx ? ` ${debuffRaw}` : `일반 detail rowID${row.id} ${debuffRaw}`}`);
+    addLog(`${historyIdx ? `히스토리 디테일 ${raw}` : `일반 detail rowID${row.id} ${raw}`}`);
+    addLog(`${historyIdx ? ` ${buffRaw}` : `일반 detail rowID${row.id} ${buffRaw}`}`);
+    addLog(`${historyIdx ? ` ${debuffRaw}` : `일반 detail rowID${row.id} ${debuffRaw}`}`);
     let detailObj = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (!detailObj || typeof detailObj !== "object") detailObj = {};
 

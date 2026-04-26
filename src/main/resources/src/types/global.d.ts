@@ -3,7 +3,7 @@ export {};
 declare global {
   interface Window {
     javaBridge?: {
-      resetDps?: () => void;
+      // resetDps?: () => void;
       moveWindow?: (x: number, y: number) => void;
       startUpdate: (msiUrl: string) => void;
       getDpsData?: () => void;

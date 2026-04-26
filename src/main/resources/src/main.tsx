@@ -6,6 +6,7 @@ import { FontApplier } from "@/components/FontApplier";
 // import { injectMockDpsData } from "./utils/mockDpsData";
 // injectMockDpsData();
 
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <FontApplier />

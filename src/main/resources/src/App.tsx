@@ -23,7 +23,7 @@ export default function App() {
     // isCollapse,
     isInCombat,
     remainHp,
-    reset,
+    // reset,
     // toggleCollapse,
     battleTime,
     formatBattleTime,
@@ -72,12 +72,12 @@ export default function App() {
   //   setSelected(null);
   // }, [toggleCollapse]);
 
-  const handleReset = useCallback(() => {
-    reset();
-    setSelectedHistoryIdx(undefined);
-    setActivePanel(null);
-    setSelected(null);
-  }, [reset]);
+  // const handleReset = useCallback(() => {
+  //   reset();
+  //   setSelectedHistoryIdx(undefined);
+  //   setActivePanel(null);
+  //   setSelected(null);
+  // }, [reset]);
 
   const playersRef = useRef<Player[]>([]);
   useEffect(() => {
@@ -127,13 +127,13 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeydown);
   }, [handleClose]);
 
-  useEffect(() => {
-    (window as any).strongReset = () => {
-      reset();
-      setActivePanel(null);
-      setSelected(null);
-    };
-  }, [reset]);
+  // useEffect(() => {
+  //   (window as any).strongReset = () => {
+  //     reset();
+  //     setActivePanel(null);
+  //     setSelected(null);
+  //   };
+  // }, [reset]);
 
   useEffect(() => {
     if (isInCombat) {
@@ -194,7 +194,7 @@ export default function App() {
           <div className=" mb-2">
             <Header
               className={headerClass}
-              reset={handleReset}
+              // reset={handleReset}
               setSettings={handlePanelToggle}
               // isCollapse={isCollapse}
               // toggleCollapse={handleToggleCollapse}
@@ -225,7 +225,7 @@ export default function App() {
           <div className=" mt-2">
             <Header
               className={headerClass}
-              reset={handleReset}
+              // reset={handleReset}
               setSettings={handlePanelToggle}
               // isCollapse={isCollapse}
               // toggleCollapse={handleToggleCollapse}
