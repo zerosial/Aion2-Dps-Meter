@@ -101,7 +101,8 @@ export const SettingsPanel = ({
     setMeterOpacity,
     panelOpacity,
     setPanelOpacity,
-
+    meterListOpacity,
+    setMeterListOpacity,
     // showPower,
     // setShowPower,
   } = useSettingsStore();
@@ -129,7 +130,7 @@ export const SettingsPanel = ({
     showTargetInfoInMinimal,
     meterOpacity,
     panelOpacity,
-
+    meterListOpacity,
     theme: { ...theme },
   }));
 
@@ -166,7 +167,7 @@ export const SettingsPanel = ({
     setTheme(snapshot.theme as ThemeColors);
     setMeterOpacity(snapshot.meterOpacity);
     setPanelOpacity(snapshot.panelOpacity);
-
+    setMeterListOpacity(snapshot.meterListOpacity);
     onClose();
   };
 
@@ -403,6 +404,24 @@ export const SettingsPanel = ({
           <div className="flex-1 h-px bg-white/10" />
         </div>
         <SettingsItem title="투명도 조정">
+          <SettingsRow
+            title="미터 목록 투명도"
+            align="center"
+            rightClassName="w-44">
+            <div className="flex h-8 items-center gap-3">
+              <Slider
+                min={0.1}
+                max={1}
+                step={0.05}
+                className="cursor-pointer"
+                value={[meterListOpacity]}
+                onValueChange={(value) => setMeterListOpacity(value[0])}
+              />
+              <span className="text-xs opacity-60 w-12 text-right tabular-nums">
+                {Math.round(meterListOpacity * 100)}%
+              </span>
+            </div>
+          </SettingsRow>
           <SettingsRow
             title="미터 배경 투명도"
             align="center"

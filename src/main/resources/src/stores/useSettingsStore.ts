@@ -97,6 +97,8 @@ interface SettingsState {
   setMeterOpacity: (v: number) => void;
   panelOpacity: number;
   setPanelOpacity: (v: number) => void;
+  meterListOpacity: number;
+  setMeterListOpacity: (v: number) => void;
 }
 
 const jb = () => (window as any).javaBridge;
@@ -119,12 +121,12 @@ const defaultSettings = {
   isMinimal: false,
   showCombatTimerInMinimal: true,
   showTargetInfoInMinimal: true,
-
   theme: DEFAULT_THEME,
   visibleSkillCodes: DEFAULT_VISIBLE_SKILL_CODES,
   // showPower: true,
   meterOpacity: 0.4,
   panelOpacity: 0.8,
+  meterListOpacity: 1,
 };
 
 export const useSettingsStore = create<SettingsState>((set) => {
@@ -173,6 +175,8 @@ export const useSettingsStore = create<SettingsState>((set) => {
       // showPower: j.loadProps?.("showPower") === "false" ? false : true,
       meterOpacity: Number(j.loadProps?.("meterOpacity")) || defaultSettings.meterOpacity,
       panelOpacity: Number(j.loadProps?.("panelOpacity")) || defaultSettings.panelOpacity,
+      meterListOpacity:
+        Number(j.loadProps?.("meterListOpacity")) || defaultSettings.meterListOpacity,
 
       isLoaded: true,
     });
@@ -202,6 +206,7 @@ export const useSettingsStore = create<SettingsState>((set) => {
     // showPower: defaultSettings.showPower,
     meterOpacity: defaultSettings.meterOpacity,
     panelOpacity: defaultSettings.panelOpacity,
+    meterListOpacity: defaultSettings.meterListOpacity,
 
     isLoaded: defaultSettings.isLoaded,
 
@@ -293,6 +298,10 @@ export const useSettingsStore = create<SettingsState>((set) => {
     setPanelOpacity: (panelOpacity) => {
       set({ panelOpacity });
       jb()?.saveProps?.("panelOpacity", String(panelOpacity));
+    },
+    setMeterListOpacity: (meterListOpacity) => {
+      set({ meterListOpacity });
+      jb()?.saveProps?.("panelOpacity", String(meterListOpacity));
     },
 
     // setShowPower: (showPower) => {

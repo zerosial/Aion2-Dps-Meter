@@ -56,6 +56,7 @@ export default function App() {
   const showTargetInfoInMinimal = useSettingsStore((s) => s.showTargetInfoInMinimal);
   const meterOpacity = useSettingsStore((s) => s.meterOpacity);
   const panelOpacity = useSettingsStore((s) => s.panelOpacity);
+  const meterListOpacity = useSettingsStore((s) => s.meterListOpacity);
 
   const [selectedHistoryIdx, setSelectedHistoryIdx] = useState<number | undefined>(undefined);
 
@@ -201,26 +202,28 @@ export default function App() {
             />
           </div>
         )}
-        {players.length > 0 && (!isMinimal || showTargetInfoInMinimal) && (
-          <TargetInfo
-            targetName={targetName}
+        <div style={{ opacity: meterListOpacity }}>
+          {players.length > 0 && (!isMinimal || showTargetInfoInMinimal) && (
+            <TargetInfo
+              targetName={targetName}
+              rowHeight={rowHeight}
+              remainHp={remainHp}
+            />
+          )}
+          <MeterList
+            players={players}
+            selectedId={selected?.id}
+            onSelect={handleSelect}
             rowHeight={rowHeight}
-            remainHp={remainHp}
           />
-        )}
-        <MeterList
-          players={players}
-          selectedId={selected?.id}
-          onSelect={handleSelect}
-          rowHeight={rowHeight}
-        />
 
-        {battleTime && (!isMinimal || showCombatTimerInMinimal) && (
-          <CombatTimer
-            isInCombat={isInCombat}
-            combatTime={formatBattleTime(battleTime)}
-          />
-        )}
+          {battleTime && (!isMinimal || showCombatTimerInMinimal) && (
+            <CombatTimer
+              isInCombat={isInCombat}
+              combatTime={formatBattleTime(battleTime)}
+            />
+          )}
+        </div>
         {headerPosition === "bottom" && (
           <div className=" mt-2">
             <Header
