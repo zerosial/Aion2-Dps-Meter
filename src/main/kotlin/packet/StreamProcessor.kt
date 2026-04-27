@@ -540,6 +540,9 @@ class StreamProcessor() {
         }
         if (start + tempV > packet.size) return false
         pdp.setSpecials(parseSpecialDamageFlags(packet.copyOfRange(start, start + tempV)))
+        if (pdp.getSpecials().contains(SpecialDamage.Restoration)){
+            offset += 2
+        }
         offset += tempV
 
 
@@ -662,7 +665,7 @@ class StreamProcessor() {
             }
 
             if ((flagByte and 0x40) != 0) {
-                flags.add(SpecialDamage.UNKNOWN4)
+                flags.add(SpecialDamage.Restoration)
             }
 
 //            if ((flagByte and 0x80) != 0) {
