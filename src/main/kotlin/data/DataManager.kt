@@ -218,9 +218,15 @@ object DataManager {
         }
     }
 
+    @Synchronized
     fun startBattle(mobId: Int) {
         if (currentTarget() == mobId) {
+            val now = System.currentTimeMillis()
+            val preemptivePackets = packetRepository.get(mobId)
+                ?.filter { it.getTimeStamp() >= now - 1000L }
+                ?.toList()
             flushPacket()
+            preemptivePackets?.forEach { packetRepository.save(it) }
         }
         saveCurrentBattleStart()
         saveCurrentTarget(mobId)
