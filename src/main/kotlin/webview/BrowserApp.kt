@@ -205,32 +205,6 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
                     }
 
                     Platform.runLater { engine.executeScript("onDownloadComplete()") }
-
-                    val currentPid = ProcessHandle.current().pid()
-                    val currentExe = ProcessHandle.current().info().command().orElse(null)
-                    val relaunchLine = if (currentExe != null)
-                        "Start-Process '${currentExe.replace("'", "''")}'"
-                    else ""
-
-                    val psFile = java.io.File(tempDir, "aion2meter_updater.ps1")
-                    val msiAbsPath = msiFile.absolutePath
-                    psFile.writeText("""
-    [System.IO.File]::WriteAllText("$tempDir\debug.txt", "started waiting for PID $currentPid`n")
-    Wait-Process -Id $currentPid -Timeout 30 -ErrorAction SilentlyContinue
-    [System.IO.File]::AppendAllText("$tempDir\debug.txt", "wait done`n")
-    Start-Process msiexec.exe -ArgumentList "/i `"$msiAbsPath`" /qn /norestart /l*v `"$tempDir\install.log`"" -Wait
-    [System.IO.File]::AppendAllText("$tempDir\debug.txt", "msiexec done`n")
-    $relaunchLine
-""".trimIndent())
-                    ProcessBuilder(
-                        "wmic", "process", "call", "create",
-                        "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File \"${psFile.absolutePath}\""
-                    ).also {
-                        it.environment()["__COMPAT_LAYER"] = "RunAsInvoker"
-                    }.start()
-
-                    Platform.exit()
-                    exitProcess(0)
                 } catch (e: Exception) {
                     logger.error("업데이트 실패", e)
                     Platform.runLater { engine.executeScript("onDownloadError()") }
