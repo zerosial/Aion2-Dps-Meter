@@ -1,9 +1,6 @@
 package com.tbread.webview
 
-import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.platform.win32.Psapi
-import com.sun.jna.platform.win32.User32
-import com.sun.jna.platform.win32.WinNT
+import com.sun.jna.platform.win32.*
 import com.tbread.DpsCalculator
 import com.tbread.addon.UploadManager
 import com.tbread.config.HotkeyHandler
@@ -107,6 +104,20 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
 
         fun updateHideHotkey(modifiers: Int, vkCode: Int) {
             HotkeyHandler.updateVisibilityHotkey(modifiers, vkCode)
+        }
+
+        fun toggleClickThrough() {
+            setClickThrough(!isClickThrough)
+        }
+
+        fun isClickThrough(): Boolean = isClickThrough
+
+        fun getClickThroughHotkey(): String {
+            return HotkeyHandler.getClickThroughHotkey().toString()
+        }
+
+        fun updateClickThroughHotkey(modifiers: Int, vkCode: Int) {
+            HotkeyHandler.updateClickThroughHotkey(modifiers, vkCode)
         }
 
         fun getDpsData(): String {
@@ -254,6 +265,11 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
     @Volatile
     private var aionEverFocused = false  // Aion2.exe가 한 번이라도 포커싱된 적 있는지
 
+    @Volatile
+    private var isClickThrough = false
+
+    private var overlayHwnd: WinDef.HWND? = null
+
     private val debugMode = false
 
     private val version = config.version
@@ -310,6 +326,9 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         }
         HotkeyHandler.registerVisibilityCallback {
             if (isVisible) hideToTray(stage) else showFromTray(stage)
+        }
+        HotkeyHandler.registerClickThroughCallback {
+            setClickThrough(!isClickThrough)
         }
         HotkeyHandler.start()
         
@@ -390,12 +409,32 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         val SWP_FRAMECHANGED = 0x0020
         val user32 = User32.INSTANCE
         val hwnd = user32.FindWindow(null, title) ?: return
+        overlayHwnd = hwnd
         val exStyle = user32.GetWindowLong(hwnd, GWL_EXSTYLE)
         user32.SetWindowLong(hwnd, GWL_EXSTYLE,
             (exStyle or WS_EX_TOOLWINDOW) and WS_EX_APPWINDOW.inv()
         )
         user32.SetWindowPos(hwnd, null, 0, 0, 0, 0,
             SWP_NOMOVE or SWP_NOSIZE or SWP_NOZORDER or SWP_FRAMECHANGED)
+    }
+
+    private fun setClickThrough(enable: Boolean) {
+        val hwnd = overlayHwnd ?: return
+        val GWL_EXSTYLE = -20
+        val WS_EX_LAYERED = 0x00080000
+        val WS_EX_TRANSPARENT = 0x00000020
+        val user32 = User32.INSTANCE
+        val exStyle = user32.GetWindowLong(hwnd, GWL_EXSTYLE)
+        val newStyle = if (enable) {
+            exStyle or WS_EX_LAYERED or WS_EX_TRANSPARENT
+        } else {
+            (exStyle or WS_EX_LAYERED) and WS_EX_TRANSPARENT.inv()
+        }
+        user32.SetWindowLong(hwnd, GWL_EXSTYLE, newStyle)
+        isClickThrough = enable
+        Platform.runLater {
+            engine.executeScript("onClickThroughChanged($enable)")
+        }
     }
 
     private fun setupTray(stage: Stage) {

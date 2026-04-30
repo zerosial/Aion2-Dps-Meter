@@ -11,15 +11,20 @@ object HotkeyHandler {
 
     private const val RESET_HOTKEY_ID = 1
     private const val VISIBILITY_HOTKEY_ID = 2
+    private const val CLICK_THROUGH_HOTKEY_ID = 3
 
     private val defaultHotkey = HotkeyCombo(modifiers = WinUser.MOD_CONTROL, vkCode = 0x52)
     private val defaultVisibilityHotkey = HotkeyCombo(modifiers = WinUser.MOD_CONTROL, vkCode = 0x48) // Ctrl+H
+    private val defaultClickThroughHotkey = HotkeyCombo(modifiers = WinUser.MOD_CONTROL, vkCode = 0x54) // Ctrl+T
 
     @Volatile
     private var currentHotkey: HotkeyCombo = loadHotkeyFromProperties()
 
     @Volatile
     private var visibilityHotkey: HotkeyCombo = loadVisibilityHotkeyFromProperties()
+
+    @Volatile
+    private var clickThroughHotkey: HotkeyCombo = loadClickThroughHotkeyFromProperties()
 
     private var listenerThread: Thread? = null
 
@@ -28,6 +33,7 @@ object HotkeyHandler {
 
     private var onHotkeyPressed: (() -> Unit)? = null
     private var onVisibilityHotkeyPressed: (() -> Unit)? = null
+    private var onClickThroughHotkeyPressed: (() -> Unit)? = null
 
     fun registerCallback(callback: () -> Unit) {
         onHotkeyPressed = callback
@@ -35,6 +41,10 @@ object HotkeyHandler {
 
     fun registerVisibilityCallback(callback: () -> Unit) {
         onVisibilityHotkeyPressed = callback
+    }
+
+    fun registerClickThroughCallback(callback: () -> Unit) {
+        onClickThroughHotkeyPressed = callback
     }
 
     data class HotkeyCombo(val modifiers: Int, val vkCode: Int) {
@@ -67,9 +77,24 @@ object HotkeyHandler {
         return if (raw != null) HotkeyCombo.fromString(raw) ?: defaultVisibilityHotkey else defaultVisibilityHotkey
     }
 
+    private fun loadClickThroughHotkeyFromProperties(): HotkeyCombo {
+        val raw = PropertyHandler.getProperty("clickThroughHotkey")
+        return if (raw != null) HotkeyCombo.fromString(raw) ?: defaultClickThroughHotkey else defaultClickThroughHotkey
+    }
+
     fun getCurrentHotkey(): HotkeyCombo = currentHotkey
 
     fun getVisibilityHotkey(): HotkeyCombo = visibilityHotkey
+
+    fun getClickThroughHotkey(): HotkeyCombo = clickThroughHotkey
+
+    fun updateClickThroughHotkey(modifiers: Int, vkCode: Int) {
+        clickThroughHotkey = HotkeyCombo(modifiers, vkCode)
+        PropertyHandler.setProperty("clickThroughHotkey", clickThroughHotkey.toString())
+        logger.info("클릭 통과 단축키 변경: $clickThroughHotkey")
+        stop()
+        start()
+    }
 
     fun updateHotkey(modifiers: Int, vkCode: Int) {
         currentHotkey = HotkeyCombo(modifiers, vkCode)
@@ -103,7 +128,11 @@ object HotkeyHandler {
             if (!registeredVisibility) logger.error("숨기기 단축키 등록 실패: $visibilityHotkey")
             else logger.info("숨기기 단축키 등록 성공: $visibilityHotkey")
 
-            if (!registeredReset && !registeredVisibility) {
+            val registeredClickThrough = user32.RegisterHotKey(null, CLICK_THROUGH_HOTKEY_ID, clickThroughHotkey.modifiers, clickThroughHotkey.vkCode)
+            if (!registeredClickThrough) logger.error("클릭 통과 단축키 등록 실패: $clickThroughHotkey")
+            else logger.info("클릭 통과 단축키 등록 성공: $clickThroughHotkey")
+
+            if (!registeredReset && !registeredVisibility && !registeredClickThrough) {
                 running = false
                 return@Thread
             }
@@ -115,6 +144,7 @@ object HotkeyHandler {
                         when (msg.wParam.toInt()) {
                             RESET_HOTKEY_ID -> onHotkeyPressed?.invoke()
                             VISIBILITY_HOTKEY_ID -> onVisibilityHotkeyPressed?.invoke()
+                            CLICK_THROUGH_HOTKEY_ID -> onClickThroughHotkeyPressed?.invoke()
                         }
                     }
                 } else {
@@ -128,6 +158,7 @@ object HotkeyHandler {
 
             user32.UnregisterHotKey(null, RESET_HOTKEY_ID)
             user32.UnregisterHotKey(null, VISIBILITY_HOTKEY_ID)
+            user32.UnregisterHotKey(null, CLICK_THROUGH_HOTKEY_ID)
             logger.info("단축키 해제")
         }, "HotkeyListener").apply { isDaemon = true }
 
