@@ -106,10 +106,6 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
             HotkeyHandler.updateVisibilityHotkey(modifiers, vkCode)
         }
 
-        fun toggleClickThrough() {
-            setClickThrough(!isClickThrough)
-        }
-
         fun isClickThrough(): Boolean = isClickThrough
 
         fun getClickThroughHotkey(): String {
