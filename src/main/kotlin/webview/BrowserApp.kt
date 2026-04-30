@@ -108,6 +108,13 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
 
         fun isClickThrough(): Boolean = isClickThrough
 
+        fun toggleAutoHide() {
+            isAutoHide = !isAutoHide
+            PropertyHandler.setProperty("isAutoHide", isAutoHide.toString())
+        }
+
+        fun isAutoHide(): Boolean = isAutoHide
+
         fun getClickThroughHotkey(): String {
             return HotkeyHandler.getClickThroughHotkey().toString()
         }
@@ -256,10 +263,13 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
     private var cachedDpsJson: String = Json.encodeToString(dpsData)
 
     @Volatile
-    private var isVisible = true  // false = 사용자가 직접 숨긴 상태
+    private var isVisible = true
 
     @Volatile
-    private var aionEverFocused = false  // Aion2.exe가 한 번이라도 포커싱된 적 있는지
+    private var isAutoHide = PropertyHandler.getProperty("isAutoHide")?.toBooleanStrictOrNull() ?: true
+
+    @Volatile
+    private var aionEverFocused = false
 
     @Volatile
     private var isClickThrough = false
@@ -355,6 +365,10 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
             while (true) {
                 kotlinx.coroutines.delay(300)
                 if (!isVisible) continue
+                if (!isAutoHide) {
+                    Platform.runLater { stage.opacity = 1.0 }
+                    continue
+                }
 
                 val aionFocused = isAion2Focused()
                 if (!aionEverFocused) {
@@ -394,6 +408,7 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
             Kernel32.INSTANCE.CloseHandle(hProcess)
         }
     }
+
 
     private fun applyOverlayWindowStyle(title: String) {
         val GWL_EXSTYLE = -20
@@ -482,7 +497,7 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
 
     private fun showFromTray(stage: Stage) {
         isVisible = true
-        aionEverFocused = false  // 포커스 추적 초기화 → Aion2 첫 포커싱 전까지 다시 보임
+        aionEverFocused = false
         Platform.runLater {
             stage.opacity = 1.0
         }
