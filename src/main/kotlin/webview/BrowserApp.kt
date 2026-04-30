@@ -485,7 +485,6 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         aionEverFocused = false  // 포커스 추적 초기화 → Aion2 첫 포커싱 전까지 다시 보임
         Platform.runLater {
             stage.opacity = 1.0
-            stage.toFront()
         }
     }
 
