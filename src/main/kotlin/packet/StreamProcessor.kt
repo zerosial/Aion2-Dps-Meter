@@ -23,13 +23,50 @@ class StreamProcessor() {
     private val decompressFactory = LZ4Factory.fastestInstance()
     private val decompressor = decompressFactory.fastDecompressor()
 
+    private sealed class Opcode(b1: Int, b2: Int) {
+        val key: Int = b1 or (b2 shl 8)
+
+        object OwnNickname   : Opcode(0x33, 0x36)
+        object OtherNickname : Opcode(0x44, 0x36)
+        object Summon        : Opcode(0x40, 0x36)
+        object Damage        : Opcode(0x04, 0x38)
+        object DoT           : Opcode(0x05, 0x38)
+        object BuffApply     : Opcode(0x2A, 0x38)
+        object BuffApply2    : Opcode(0x2B, 0x38)
+        object BattleToggle  : Opcode(0x21, 0x8D)
+        object RemainHp      : Opcode(0x00, 0x8D)
+        object JoinRequest   : Opcode(0x07, 0x97)
+        object CancelJoin    : Opcode(0x25, 0x97)
+        object AdmitJoin     : Opcode(0x0B, 0x97)
+        object RefuseJoin    : Opcode(0x09, 0x97)
+        object InstanceStart : Opcode(0x18, 0x97)
+        object ExitParty     : Opcode(0x1D, 0x97)
+    }
+
+    private val handlers: Map<Int, (ByteArray, VarIntOutput, Boolean, Long, Long) -> Unit> = mapOf(
+        Opcode.OwnNickname.key   to { packet, lengthInfo, _, _, arrivedAt            -> searchOwnNickname(packet, lengthInfo, arrivedAt) },
+        Opcode.OtherNickname.key to { packet, lengthInfo, _, _, arrivedAt            -> searchOtherNickname(packet, lengthInfo, arrivedAt) },
+        Opcode.Summon.key        to { packet, _, extraFlag, _, _                     -> parseSummonPacket(packet, extraFlag) },
+        Opcode.Damage.key        to { packet, _, extraFlag, epoch, arrivedAt         -> parsingDamage(packet, extraFlag, epoch, arrivedAt) },
+        Opcode.DoT.key           to { packet, _, extraFlag, epoch, arrivedAt         -> parseDoTPacket(packet, extraFlag, epoch, arrivedAt) },
+        Opcode.BuffApply.key     to { packet, lengthInfo, extraFlag, _, arrivedAt    -> parseBuffPacket(packet, lengthInfo, extraFlag, arrivedAt) },
+        Opcode.BuffApply2.key    to { packet, lengthInfo, extraFlag, _, arrivedAt    -> parseBuffPacket(packet, lengthInfo, extraFlag, arrivedAt) },
+        Opcode.BattleToggle.key  to { packet, lengthInfo, extraFlag, _, _            -> parseBattlePacket(packet, lengthInfo, extraFlag) },
+        Opcode.RemainHp.key      to { packet, lengthInfo, extraFlag, _, _            -> parseRemainHp(packet, lengthInfo, extraFlag) },
+        Opcode.JoinRequest.key   to { packet, lengthInfo, extraFlag, _, arrivedAt    -> parseJoinRequestPacket(packet, lengthInfo, extraFlag, arrivedAt) },
+        Opcode.CancelJoin.key    to { packet, lengthInfo, extraFlag, _, _            -> parseCancelJoinRequest(packet, lengthInfo, extraFlag) },
+        Opcode.AdmitJoin.key     to { packet, lengthInfo, extraFlag, _, _            -> parseAdmitJoinRequest(packet, lengthInfo, extraFlag) },
+        Opcode.RefuseJoin.key    to { packet, lengthInfo, extraFlag, _, _            -> parseRefuseJoinRequest(packet, lengthInfo, extraFlag) },
+        Opcode.InstanceStart.key to { packet, lengthInfo, extraFlag, _, _            -> parseInstanceStartPacket(packet, lengthInfo, extraFlag) },
+        Opcode.ExitParty.key     to { packet, lengthInfo, extraFlag, _, _            -> parseExitParty(packet, lengthInfo, extraFlag) },
+    )
+
     fun onPacketReceived(packet: ByteArray, arrivedAt: Long) {
         if (packet.size == 3) return
 
 //        DataManager.saveRawPacket(packet, arrivedAt)
 
         val epoch = DataManager.currentEpoch()
-
 
         val lengthInfo = readVarInt(packet)
         val extraFlag = (packet[lengthInfo.length] >= 0xf0.toByte() && packet[lengthInfo.length] < 0xff.toByte())
@@ -44,34 +81,12 @@ class StreamProcessor() {
                 return
             }
         }
-        searchOwnNickname(packet, lengthInfo, arrivedAt)
-        searchOtherNickname(packet, lengthInfo, arrivedAt)
-        var flag = false
-        flag = parseBattlePacket(packet, lengthInfo, extraFlag)
-        if (flag) return
-        flag = parsingDamage(packet, extraFlag, epoch, arrivedAt)
-        if (flag) return
-        flag = parseSummonPacket(packet, extraFlag)
-        if (flag) return
-        flag = parseDoTPacket(packet, extraFlag, epoch, arrivedAt)
-        if (flag) return
-        flag = parseRemainHp(packet, lengthInfo, extraFlag)
-        if (flag) return
-        flag = parseBuffPacket(packet, lengthInfo, extraFlag, arrivedAt)
-        if (flag) return
-        flag = parseJoinRequestPacket(packet, lengthInfo, extraFlag, arrivedAt)
-        if (flag) return
-        flag = parseCancelJoinRequest(packet, lengthInfo, extraFlag)
-        if (flag) return
-        flag = parseInstanceStartPacket(packet, lengthInfo, extraFlag)
-        if (flag) return
-        flag = parseExitParty(packet, lengthInfo, extraFlag)
-        if (flag) return
-        flag = parseAdmitJoinRequest(packet, lengthInfo, extraFlag)
-        if (flag) return
-        flag = parseRefuseJoinRequest(packet, lengthInfo, extraFlag)
-        if (flag) return
 
+        val opcodeOffset = lengthInfo.length + if (extraFlag) 1 else 0
+        if (opcodeOffset + 1 >= packet.size) return
+
+        val opcodeKey = (packet[opcodeOffset].toInt() and 0xFF) or ((packet[opcodeOffset + 1].toInt() and 0xFF) shl 8)
+        handlers[opcodeKey]?.invoke(packet, lengthInfo, extraFlag, epoch, arrivedAt)
     }
 
     private fun decompressPacket(
