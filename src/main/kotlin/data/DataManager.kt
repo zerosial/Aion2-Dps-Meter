@@ -317,11 +317,19 @@ object DataManager {
     mobId 영역
      */
     fun mobId(mobId: Int): Int? {
-        return mobIdRepository.get(mobId)
+        return mobIdRepository.get(mobId)?.code
+    }
+
+    fun mobMaxHp(mobId: Int): Int? {
+        return mobIdRepository.get(mobId)?.maxHp?.takeIf { it > 0 }
     }
 
     fun saveMobId(mid: Int, code: Int) {
         mobIdRepository.save(mid, code)
+    }
+
+    fun saveMobMaxHp(mid: Int, maxHp: Int) {
+        mobIdRepository.saveMaxHp(mid, maxHp)
     }
 
     private fun existMobId(mobId: Int): Boolean {

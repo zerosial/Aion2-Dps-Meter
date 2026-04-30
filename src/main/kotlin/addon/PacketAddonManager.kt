@@ -26,4 +26,8 @@ object PacketAddonManager {
     fun processingUser(joinRequestUser: JoinRequestUser):JoinRequestUser {
         return addon?.processingUser(joinRequestUser)?:joinRequestUser
     }
+
+    fun parsingMobSpawnAddon(packet: ByteArray,offset:Int,mid:Int,mobCode:Int){
+        addon?.parsingMobSpawnAddon(packet, offset,mid,mobCode)
+    }
 }

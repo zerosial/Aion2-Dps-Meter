@@ -1,13 +1,21 @@
 package com.tbread.data.repository
 
-class MobIdRepository {
-    private val storage = HashMap<Int, Int>()
+data class MobInstance(val code: Int, var maxHp: Int = 0)
 
-    fun save(key: Int, value: Int): Int? {
-        return storage.put(key, value)
+class MobIdRepository {
+    private val storage = HashMap<Int, MobInstance>()
+
+    fun save(key: Int, code: Int): MobInstance? {
+        return storage.put(key, MobInstance(code))
     }
 
-    fun get(id: Int): Int? {
+    fun saveMaxHp(key: Int, maxHp: Int): Boolean {
+        val instance = storage[key] ?: return false
+        instance.maxHp = maxHp
+        return true
+    }
+
+    fun get(id: Int): MobInstance? {
         return storage[id]
     }
 

@@ -427,9 +427,10 @@ class StreamProcessor() {
                     (packet[codeMarkerIdx - 2].toInt() and 0xFF shl 8) or
                     (packet[codeMarkerIdx - 3].toInt() and 0xFF)
             DataManager.saveMobId(summonInfo.value, mobCode)
-//            if (DataManager.mob(mobCode)?.boss == true) {
+            if (DataManager.mob(mobCode)?.boss == true) {
+                PacketAddonManager.parsingMobSpawnAddon(packet,codeMarkerIdx,summonInfo.value,mobCode)
 //                println("${summonInfo.value} 스폰, 몬스터명 ${DataManager.mob(mobCode)?.name}")
-//            }
+            }
         }
 
 
