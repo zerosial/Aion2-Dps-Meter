@@ -179,7 +179,7 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         fun startUpdate(msiUrl: String) {
             Thread {
                 try {
-                    val tempDir = System.getProperty("java.io.tmpdir")
+                    val tempDir = java.io.File(System.getProperty("java.io.tmpdir"), "aion2meter4j").also { it.mkdirs() }
                     val msiFile = java.io.File(tempDir, "aion2meter_update.msi")
 
                     val connection = java.net.URI(msiUrl).toURL().openConnection() as java.net.HttpURLConnection
@@ -204,6 +204,7 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
                         }
                     }
 
+                    Runtime.getRuntime().exec(arrayOf("explorer.exe", tempDir.absolutePath))
                     Platform.runLater { engine.executeScript("onDownloadComplete()") }
                 } catch (e: Exception) {
                     logger.error("업데이트 실패", e)
