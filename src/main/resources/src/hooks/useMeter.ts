@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Player } from "@/types";
 import { parseCombatData } from "../utils/parser";
-// import { useDebugStore } from "../stores/debugStore";
+import { useDebugStore } from "../stores/debugStore";
 
 const POLL_MS = 300;
 
 export const useMeter = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [targetName, setTargetName] = useState<string>("");
-  const [remainHp, setRemainHp] = useState<string | number>(0);
+  const [remainHp, setRemainHp] = useState<number>(0);
+  const [maxHp, setMaxHp] = useState<number>(0);
   // const [isCollapse, setIsCollapse] = useState(false);
   const [isInCombat, setIsInCombat] = useState(false);
   const resetTimestampRef = useRef<number>(0);
 
   const [battleTime, setBattleTime] = useState<number | null>(null);
-  // const { addLog } = useDebugStore();
+  const { addLog } = useDebugStore();
   const isCollapseRef = useRef(false);
   const lastBattleTimeRef = useRef<number | null>(null);
   const combatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -32,7 +33,7 @@ export const useMeter = () => {
     return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   }, []);
 
-const setPlayersIfChanged = useCallback((newRows: Player[]) => {
+  const setPlayersIfChanged = useCallback((newRows: Player[]) => {
     setPlayers((prev) => {
       const isSame =
         prev.length === newRows.length &&
@@ -40,16 +41,17 @@ const setPlayersIfChanged = useCallback((newRows: Player[]) => {
           (p, i) =>
             p.id === newRows[i].id &&
             p.dps === newRows[i].dps &&
-            p.damageContribution === newRows[i].damageContribution,
+            p.damageContribution === newRows[i].damageContribution &&
+            p.entireContribution === newRows[i].entireContribution,
         );
       return isSame ? prev : newRows;
     });
-  },[]);
+  }, []);
 
   const fetchDps = () => {
     if (isCollapseRef.current) return;
     const raw = window.javaBridge?.getDpsData?.();
-    // addLog(` ${raw}`);
+    addLog(` ${raw}`);
     if (typeof raw !== "string") return;
     if (raw === lastJsonRef.current) {
       return;
@@ -58,7 +60,7 @@ const setPlayersIfChanged = useCallback((newRows: Player[]) => {
     lastJsonRef.current = raw;
 
     const parsed = JSON.parse(raw);
-    const { players: rows, targetName, remainHp } = parseCombatData(parsed);
+    const { players: rows, targetName, remainHp, maxHp } = parseCombatData(parsed);
 
     if (resetPendingRef.current) {
       const contributors = parsed.contributors ?? [];
@@ -100,6 +102,7 @@ const setPlayersIfChanged = useCallback((newRows: Player[]) => {
       snapshotRef.current = rows;
     }
 
+    setMaxHp(maxHp);
     setPlayersIfChanged(rowsToRender);
     setTargetName(targetName);
     setRemainHp(remainHp);
@@ -155,10 +158,12 @@ const setPlayersIfChanged = useCallback((newRows: Player[]) => {
   //   }
   // };
   const setHistoryData = useCallback((report: any) => {
-    const { players: rows, targetName, remainHp } = parseCombatData(report);
+    const { players: rows, targetName, remainHp, maxHp } = parseCombatData(report);
     const sorted = [...rows].sort((a, b) => b.dps - a.dps);
 
     const battleTime = (report.battleEnd ?? 0) - (report.battleStart ?? 0);
+    setMaxHp(maxHp);
+
     setPlayersIfChanged(sorted);
     setTargetName(targetName);
     setRemainHp(remainHp);
@@ -180,6 +185,7 @@ const setPlayersIfChanged = useCallback((newRows: Player[]) => {
     battleTime,
     isInCombat,
     remainHp,
+    maxHp,
     formatBattleTime,
     // reset,
     // toggleCollapse,

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { SkillIcon } from "../SkillIcon";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 interface Props {
   player: Player | null;
@@ -42,6 +43,7 @@ export const DetailsPanel = ({
   const buffColumns = detailWidth >= 1200 ? 4 : detailWidth >= 900 ? 3 : detailWidth >= 700 ? 2 : 1;
   const isCompact = detailWidth < 700;
   const [openPanel, setOpenPanel] = useState<string>("skills");
+  const contributionMode = useSettingsStore((s) => s.contributionMode);
 
   const playerNameMap = useMemo(() => new Map(players.map((p) => [p.id, p.name])), [players]);
 
@@ -87,7 +89,13 @@ export const DetailsPanel = ({
       <div className="grid grid-cols-4 gap-2 py-3">
         {[
           { label: "누적 피해량", value: details.totalDmg.toLocaleString() },
-          { label: "피해량 기여도", value: `${details.contributionPct.toFixed(1)}%` },
+          {
+            label: "피해량 기여도",
+            value:
+              contributionMode === "entireContribution"
+                ? `${player.entireContribution.toFixed(1)}%`
+                : `${details.contributionPct.toFixed(1)}%`,
+          },
           { label: "치명타 비율", value: `${details.totalCritPct}%` },
           { label: "완벽 비율", value: `${details.totalPerfectPct}%` },
           { label: "강타 비율", value: `${details.totalDoublePct}%` },

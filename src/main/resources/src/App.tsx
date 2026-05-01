@@ -23,6 +23,7 @@ export default function App() {
     // isCollapse,
     isInCombat,
     remainHp,
+    maxHp,
     // reset,
     // toggleCollapse,
     battleTime,
@@ -213,6 +214,7 @@ export default function App() {
               targetName={targetName}
               rowHeight={rowHeight}
               remainHp={remainHp}
+              maxHp={maxHp}
             />
           )}
           <MeterList
@@ -230,7 +232,7 @@ export default function App() {
           )}
         </div>
         {headerPosition === "bottom" && (
-          <div className=" mt-2">
+          <div className="mt-2">
             <Header
               className={headerClass}
               // reset={handleReset}

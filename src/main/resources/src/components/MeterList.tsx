@@ -107,6 +107,7 @@ export const MeterList = memo(({ players, selectedId, onSelect, rowHeight }: Pro
               dps={current.dps}
               amount={current.amount}
               contribution={current.damageContribution}
+              entireContribution={current.entireContribution}
               isUser={current.isUser}
               isSelected={selectedId === current.id}
               onSelect={onSelect}

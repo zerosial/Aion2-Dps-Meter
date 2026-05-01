@@ -4,10 +4,11 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 interface Props {
   targetName: string;
   rowHeight: number;
-  remainHp: string | number;
+  remainHp: number;
+  maxHp: number;
 }
 
-export const TargetInfo = memo(({ targetName, rowHeight, remainHp }: Props) => {
+export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Props) => {
   const theme = useSettingsStore((s) => s.theme);
   const displayName = targetName || "타겟 인식 실패";
   const isFailed = !targetName;
@@ -37,15 +38,30 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp }: Props) => {
           />
         </div>
         <span
-          className="font-bold text-shadow-meter"
+          className="font-bold text-shadow-meter truncate"
           style={{ color: isFailed ? "rgba(255,255,255,0.4)" : "#ffffff", fontSize }}>
           {displayName}
         </span>
+
         {!isFailed && (
-          <div className="ml-auto font-bold text-shadow-meter">
+          <div className="ml-auto font-bold text-shadow-meter shrink-0 flex items-center gap-0">
             <span style={{ color: theme.bossRightValue, fontSize }}>
-              {" "}
-              {Number(remainHp).toLocaleString()}
+              {remainHp.toLocaleString()}
+            </span>
+            <span
+              style={{ color: theme.bossRightValue, fontSize }}
+              className="mx-0.5">
+              /
+            </span>
+            <span
+              style={{ color: theme.bossRightValue, fontSize }}
+              className=" text-shadow-meter font-bold">
+              {maxHp.toLocaleString()}
+            </span>
+            <span
+              style={{ color: theme.bossRightValue, fontSize }}
+              className="ml-2">
+              {maxHp > 0 ? `${((remainHp / maxHp) * 100).toFixed(1)}%` : "-"}
             </span>
           </div>
         )}

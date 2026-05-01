@@ -121,6 +121,8 @@ class DpsCalculator(private val streamResetCallback: (() -> Unit)? = null) {
             val mob = DataManager.mob(mobCode!!)
             report.target = MobInfo(currentTarget, mob!!)
             report.target!!.remainHp = DataManager.mobHp(currentTarget) ?: 0
+            report.target!!.maxHp = DataManager.mobMaxHp(currentTarget)?.toInt() ?: 0
+
         }
 
         val totalDamage = cachedInfo.values.sumOf { it.amount }

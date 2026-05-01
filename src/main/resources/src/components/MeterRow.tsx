@@ -10,6 +10,7 @@ interface Props {
   dps: number;
   amount: number;
   contribution: number;
+  entireContribution: number;
   isUser: boolean;
   isSelected: boolean;
   onSelect: (id: number) => void;
@@ -29,6 +30,7 @@ export const MeterRow = memo(
     dps,
     server,
     contribution,
+    entireContribution,
     isUser,
     onSelect,
     topDps,
@@ -39,6 +41,7 @@ export const MeterRow = memo(
     const displayMode = useSettingsStore((s) => s.displayMode);
     const nameDisplay = useSettingsStore((s) => s.nameDisplay);
     const theme = useSettingsStore((s) => s.theme);
+    const contributionMode = useSettingsStore((s) => s.contributionMode);
     // const showPower = useSettingsStore((s) => s.showPower);
 
     const gradients = {
@@ -73,6 +76,7 @@ export const MeterRow = memo(
       const amountColor = theme.meterStatAmount;
       const dpsColor = theme.meterStatDps;
       const percentColor = theme.meterStatPercent;
+      const pct = contributionMode === "entireContribution" ? entireContribution : contribution;
       switch (displayMode) {
         case "amount_dps_percent":
           return (
@@ -90,7 +94,7 @@ export const MeterRow = memo(
               <span
                 className="text-end whitespace-nowrap "
                 style={{ color: percentColor, fontSize }}>
-                {contribution.toFixed(1)}%
+                {pct.toFixed(1)}%
               </span>
             </>
           );
@@ -105,7 +109,7 @@ export const MeterRow = memo(
               <span
                 className="text-end whitespace-nowrap "
                 style={{ color: percentColor, fontSize }}>
-                {contribution.toFixed(1)}%
+                {pct.toFixed(1)}%
               </span>
             </>
           );
@@ -125,7 +129,7 @@ export const MeterRow = memo(
               <span
                 className="text-end whitespace-nowrap "
                 style={{ color: percentColor, fontSize }}>
-                {contribution.toFixed(1)}%
+                {pct.toFixed(1)}%
               </span>
             </>
           );
@@ -140,7 +144,7 @@ export const MeterRow = memo(
               <span
                 className="text-end whitespace-nowrap "
                 style={{ color: percentColor, fontSize }}>
-                {contribution.toFixed(1)}%
+                {pct.toFixed(1)}%
               </span>
             </>
           );
@@ -156,7 +160,7 @@ export const MeterRow = memo(
               <span
                 className="text-end whitespace-nowrap "
                 style={{ color: percentColor, fontSize }}>
-                {contribution.toFixed(1)}%
+                {pct.toFixed(1)}%
               </span>
             </>
           );
@@ -224,6 +228,7 @@ export const MeterRow = memo(
     return (
       prev.dps === next.dps &&
       prev.contribution === next.contribution &&
+      prev.entireContribution === next.entireContribution &&
       prev.isSelected === next.isSelected &&
       prev.topDps === next.topDps &&
       prev.name === next.name &&

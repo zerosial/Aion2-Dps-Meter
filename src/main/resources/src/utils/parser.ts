@@ -12,10 +12,13 @@ interface InformationValue {
   amount: number;
   dps: number;
   contribution: number;
+  entireContribution: number;
 }
 interface Target {
   id: number;
-  remainHp: string;
+  remainHp: number;
+  maxHp: number;
+
   mob?: {
     code: number;
     name: string;
@@ -85,11 +88,12 @@ export const getServerLabel = (server?: number) => {
 export function parseCombatData(raw: unknown): {
   players: Player[];
   targetName: string;
-  remainHp: string | number;
+  remainHp: number;
+  maxHp: number;
 } {
   const data = raw as RawCombatData;
   if (!data?.contributors || !data?.information)
-    return { players: [], targetName: "", remainHp: 0 };
+    return { players: [], targetName: "", remainHp: 0, maxHp: 0 };
 
   const rows: Player[] = [];
 
@@ -100,7 +104,8 @@ export function parseCombatData(raw: unknown): {
 
     const dps = Math.trunc(Number(info.dps));
     const amount = Number(info.amount);
-    const damageContribution = Math.round(Number(info.contribution) * 10) / 10;
+    const damageContribution = Number(info.contribution);
+    const entireContribution = Number(info.entireContribution);
     if (!Number.isFinite(dps)) continue;
 
     const serverLabel = getServerLabel(contributor.server);
@@ -116,6 +121,7 @@ export function parseCombatData(raw: unknown): {
       dps,
       amount,
       damageContribution,
+      entireContribution,
       isUser: contributor.isExecutor === true,
       // power: contributor.power ?? 0,
     });
@@ -123,5 +129,7 @@ export function parseCombatData(raw: unknown): {
 
   const targetName = data.target?.mob?.name ?? "";
   const remainHp = data.target?.remainHp ?? 0;
-  return { players: rows, targetName, remainHp };
+  const maxHp = data.target?.maxHp ?? 0;
+
+  return { players: rows, targetName, remainHp, maxHp };
 }

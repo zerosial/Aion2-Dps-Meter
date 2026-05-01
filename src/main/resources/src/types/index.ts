@@ -22,10 +22,13 @@ export interface Player {
   dps: number;
   amount: number;
   damageContribution: number;
+  entireContribution: number;
   isUser: boolean;
   server: number;
   // power: number;
 }
+
+export type ContributionMode = "contribution" | "entireContribution";
 export interface CombatRaw {
   combatants: Record<string, any>;
 }
