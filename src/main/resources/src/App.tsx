@@ -14,8 +14,8 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
 import { JoinRequestPanel } from "@/components/joinPanel/JoinRequestPanel";
 import { cn } from "@/lib/utils";
-import { LockKeyhole } from "lucide-react";
 import { DebugConsole } from "./components/DebugConsole";
+import lock from "@/assets/lock.png";
 export default function App() {
   const {
     players,
@@ -173,7 +173,7 @@ export default function App() {
   );
 
   const rootClass = cn(
-    "drag-area cursor-move select-none relative group/app",
+    "drag-area cursor-move select-none relative group/app pt-2",
     isDragging && "pointer-events-none",
   );
   const handleSelectHistory = useCallback(
@@ -249,6 +249,16 @@ export default function App() {
             <div className="w-1 h-10 rounded-full bg-white  transition-colors" />
           </div>
         )}
+        {isClickThrough && (
+          <div
+            className="absolute -top-2  z-50 pointer-events-none"
+            style={{ right: "-7.5px" }}>
+            <img
+              src={lock}
+              className="w-4 h-4"></img>
+            {/* <LockKeyhole className="size-4 opacity-60 text-white " /> */}
+          </div>
+        )}
       </div>
 
       <div className="group/join">
@@ -275,11 +285,6 @@ export default function App() {
           onCheckUpdate={handleCheckUpdate}
         />
       </div>
-      {isClickThrough && (
-        <div className="absolute top-0 -right-2 z-50 pointer-events-none">
-          <LockKeyhole className="size-4 opacity-60 text-white " />
-        </div>
-      )}
     </div>
     // </TooltipProvider>
   );
