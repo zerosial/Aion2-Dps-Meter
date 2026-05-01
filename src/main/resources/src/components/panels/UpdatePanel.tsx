@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 interface Props {
   updateInfo: UpdateInfo | null;
   downloadState: DownloadState;
-  checkStatus: CheckStatus; 
+  checkStatus: CheckStatus;
   onClose: () => void;
   onUpdate: () => void;
   onRetryDownload: () => void;
@@ -100,7 +100,9 @@ export const UpdatePanel = ({
         <div className={`w-2 h-2 rounded-full shrink-0 ${DOT_CLS[status]}`} />
         <span className="flex-1 text-sm">{HEADER_TITLE[status]}</span>
         {showClose && (
-          <Button variant="ghost" onClick={onClose}>
+          <Button
+            variant="ghost"
+            onClick={onClose}>
             <X className="scale-125" />
           </Button>
         )}
@@ -116,12 +118,13 @@ export const UpdatePanel = ({
       {status === "idle" && checkStatus === "upToDate" && (
         <>
           <div className={CLS.body}>
-            <Divider label="최신 버전" labelCls="text-green-400/70" />
+            <Divider
+              label="최신 버전"
+              labelCls="text-green-400/70"
+            />
             <div className={CLS.verRow}>
               <span className={CLS.verLabel}>현재</span>
-              <span className={CLS.verCur}>
-                v{updateInfo?.currentVersion ?? "알 수 없음"}
-              </span>
+              <span className={CLS.verCur}>v{updateInfo?.currentVersion ?? "알 수 없음"}</span>
             </div>
             <div className={CLS.verRow}>
               <span className={CLS.verLabel}>상태</span>
@@ -141,7 +144,10 @@ export const UpdatePanel = ({
       {status === "idle" && checkStatus === "error" && (
         <>
           <div className={CLS.body}>
-            <Divider label="버전 확인 실패" labelCls="text-red-400/50" />
+            <Divider
+              label="버전 확인 실패"
+              labelCls="text-red-400/50"
+            />
             <div className={CLS.verRow}>
               <span className={CLS.verLabel}>현재</span>
               <span className={CLS.verCur}>알 수 없음</span>
@@ -197,7 +203,10 @@ export const UpdatePanel = ({
       {status === "downloading" && (
         <>
           <div className={CLS.body}>
-            <Divider label="다운로드 중" labelCls="text-purple-400/60" />
+            <Divider
+              label="다운로드 중"
+              labelCls="text-purple-400/60"
+            />
             {updateInfo && (
               <VersionRows
                 current={updateInfo.currentVersion}
@@ -207,7 +216,7 @@ export const UpdatePanel = ({
           </div>
           <div className={`${CLS.footer} flex flex-col gap-2`}>
             <div className="flex justify-between items-center text-sm">
-              <p className="text-white/40">설치 완료 후 자동으로 재실행 됩니다.</p>
+              <p className="text-white/40">다운로드 중..</p>
               <span className="text-purple-400 tabular-nums">{downloadState.percent}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
@@ -224,12 +233,15 @@ export const UpdatePanel = ({
       {/* 다운로드 완료 */}
       {status === "complete" && (
         <div className="flex-1 py-10 flex flex-col items-center justify-center gap-1.25">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center mb-1
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center mb-1
                           bg-green-400/10 border border-green-400/20 text-green-400 text-[15px]">
             ✓
           </div>
           <p className="text-sm text-slate-200">다운로드가 완료되었습니다</p>
-          <p className="text-sm text-white/45">잠시 후 앱이 자동으로 재실행됩니다</p>
+          <p className="text-sm text-white/45">
+            미터기를 종료하고 재설치한 뒤 다시 실행해주시기 바랍니다.
+          </p>
         </div>
       )}
 
@@ -237,7 +249,10 @@ export const UpdatePanel = ({
       {status === "error" && (
         <>
           <div className={CLS.body}>
-            <Divider label="설치 오류" labelCls="text-red-400/50" />
+            <Divider
+              label="설치 오류"
+              labelCls="text-red-400/50"
+            />
             {updateInfo && (
               <div className={CLS.verRow}>
                 <span className={CLS.verLabel}>현재</span>

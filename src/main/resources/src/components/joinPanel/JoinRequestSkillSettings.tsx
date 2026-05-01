@@ -59,15 +59,7 @@ export const JoinRequestSkillSettings = ({
     visible ? "visible opacity-100 translate-x-2" : "invisible opacity-0 translate-x-0",
   );
 
-  const SkillGroup = ({
-    label,
-    codes,
-    job, 
-  }: {
-    label: string;
-    codes: number[];
-    job: string; 
-  }) => {
+  const SkillGroup = ({ label, codes, job }: { label: string; codes: number[]; job: string }) => {
     if (codes.length === 0) return null;
     const allChecked = codes.every((c) => visibleSkillCodes.includes(c));
     return (
@@ -88,7 +80,7 @@ export const JoinRequestSkillSettings = ({
               onClick={() => toggle(code)}
               className={cn(
                 "flex items-center text-xs px-3 gap-2 rounded-xl",
-                getClassColor(job), 
+                getClassColor(job),
                 visibleSkillCodes.includes(code) ? "opacity-100" : "opacity-40",
               )}>
               <SkillIcon
@@ -126,8 +118,7 @@ export const JoinRequestSkillSettings = ({
             if (normalSkills.length === 0 && stigmaSkills.length === 0) return null;
             return (
               <div key={job}>
-                {/* 직업 헤더 */}
-                <div className="flex items-center gap-2 text-sm font-bold text-white mb-3 pb-1 border-b border-white/10">
+                <div className="flex items-center gap-2 text-sm font-bold text-white mb-3 pb-1 ">
                   <img
                     src={getJobIconSrc(job)}
                     className="w-5 h-5 object-contain"
