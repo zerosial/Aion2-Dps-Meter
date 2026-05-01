@@ -239,8 +239,8 @@ export const useSettingsStore = create<SettingsState>((set) => {
     isAutoHide: defaultSettings.isAutoHide,
     isLoaded: defaultSettings.isLoaded,
 
-    joinPanelWidth:defaultSettings.joinPanelWidth,
-    joinPanelHeight:defaultSettings.joinPanelHeight,
+    joinPanelWidth: defaultSettings.joinPanelWidth,
+    joinPanelHeight: defaultSettings.joinPanelHeight,
     // setHotkey: (hotkey) => {
     //   set({ hotkey });
     //   jb()?.updateHotkey?.(hotkey.modifiers, hotkey.vkCode);
@@ -351,13 +351,13 @@ export const useSettingsStore = create<SettingsState>((set) => {
     //   set({ showPower });
     //   jb()?.saveProps?.("showPower", String(showPower));
     // },
-    setJoinPanelWidth: (joinPanelHeight) => {
-      set({ joinPanelHeight });
-      jb()?.saveProps?.("joinPanelHeight", joinPanelHeight);
-    },
-    setJoinPanelHeight: (joinPanelWidth) => {
+    setJoinPanelWidth: (joinPanelWidth) => {
       set({ joinPanelWidth });
-      jb()?.saveProps?.("joinPanelWidth", joinPanelWidth);
+      jb()?.saveProps?.("joinPanelWidth", String(joinPanelWidth));
+    },
+    setJoinPanelHeight: (joinPanelHeight) => {
+      set({ joinPanelHeight });
+      jb()?.saveProps?.("joinPanelHeight", String(joinPanelHeight));
     },
   };
 });

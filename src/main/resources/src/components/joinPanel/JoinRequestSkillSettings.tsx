@@ -6,6 +6,8 @@ import { SkillIcon } from "../SkillIcon";
 import { getClassColor } from "@/utils/classColor";
 import { GROUPED_BY_JOB, getSkillName } from "@/constants/codes";
 import { cn } from "@/lib/utils";
+import { getJobIconSrc } from "@/utils/icons";
+
 export const JoinRequestSkillSettings = ({
   open,
   onOpenChange,
@@ -42,7 +44,7 @@ export const JoinRequestSkillSettings = ({
     );
   };
 
-  const toggleAll = (codes: number[], checked: boolean) => {
+  const toggleGroup = (codes: number[], checked: boolean) => {
     setVisibleSkillCodes(
       checked
         ? Array.from(new Set([...visibleSkillCodes, ...codes]))
@@ -51,11 +53,55 @@ export const JoinRequestSkillSettings = ({
   };
 
   const panelClass = cn(
-    "min-w-0 fixed w-100 top-0 left-full ml-2 h-auto z-50",
+    "fixed top-0 left-full ml-2 z-50",
     "bg-(--panel-bg) text-white rounded-lg",
     "transition-all duration-200 ease-in-out",
     visible ? "visible opacity-100 translate-x-2" : "invisible opacity-0 translate-x-0",
   );
+
+  const SkillGroup = ({
+    label,
+    codes,
+    job, 
+  }: {
+    label: string;
+    codes: number[];
+    job: string; 
+  }) => {
+    if (codes.length === 0) return null;
+    const allChecked = codes.every((c) => visibleSkillCodes.includes(c));
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-white/40 font-semibold">{label}</span>
+          <button
+            onClick={() => toggleGroup(codes, !allChecked)}
+            className="cursor-pointer text-xs text-white/30 hover:text-white/60 transition-colors">
+            {allChecked ? "전체 해제" : "전체 선택"}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {codes.map((code) => (
+            <Button
+              key={code}
+              size="sm"
+              onClick={() => toggle(code)}
+              className={cn(
+                "flex items-center text-xs px-3 gap-2 rounded-xl",
+                getClassColor(job), 
+                visibleSkillCodes.includes(code) ? "opacity-100" : "opacity-40",
+              )}>
+              <SkillIcon
+                code={code}
+                size={14}
+              />
+              <span>{getSkillName(code) ?? code}</span>
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="cursor-auto">
@@ -74,43 +120,32 @@ export const JoinRequestSkillSettings = ({
         </div>
 
         <div
-          className="px-5 pb-3 space-y-4  overflow-y-auto"
+          className="px-5 pb-4 space-y-6 overflow-y-auto"
           style={{ maxHeight: joinPanelHeight - 60 }}>
-          {GROUPED_BY_JOB.map(({ job, skills }) => {
-            if (skills.length === 0) return null;
-            const allChecked = skills.every((c) => visibleSkillCodes.includes(c));
-
+          {GROUPED_BY_JOB.map(({ job, normalSkills, stigmaSkills }) => {
+            if (normalSkills.length === 0 && stigmaSkills.length === 0) return null;
             return (
-              <div
-                key={job}
-                className="py-1">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs text-white/40 font-semibold">{job}</span>
-                  <button
-                    onClick={() => toggleAll(skills, !allChecked)}
-                    className="cursor-pointer text-xs text-white/30 hover:text-white/60 transition-colors">
-                    {allChecked ? "전체 해제" : "전체 선택"}
-                  </button>
+              <div key={job}>
+                {/* 직업 헤더 */}
+                <div className="flex items-center gap-2 text-sm font-bold text-white mb-3 pb-1 border-b border-white/10">
+                  <img
+                    src={getJobIconSrc(job)}
+                    className="w-5 h-5 object-contain"
+                    style={{ filter: "drop-shadow(0 0 3px rgba(20,20,20,0.6))" }}
+                  />
+                  {job}
                 </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((code) => (
-                    <Button
-                      key={code}
-                      size="sm"
-                      onClick={() => toggle(code)}
-                      className={cn(
-                        "flex items-center text-xs px-3 gap-2 rounded-xl",
-                        getClassColor(job),
-                        visibleSkillCodes.includes(code) ? "opacity-100" : "opacity-40",
-                      )}>
-                      <SkillIcon
-                        code={code}
-                        size={14}
-                      />
-                      <span>{getSkillName(code) ?? code}</span>
-                    </Button>
-                  ))}
+                <div className="space-y-4 pl-1">
+                  <SkillGroup
+                    label="일반 스킬"
+                    codes={normalSkills}
+                    job={job}
+                  />
+                  <SkillGroup
+                    label="스티그마"
+                    codes={stigmaSkills}
+                    job={job}
+                  />
                 </div>
               </div>
             );

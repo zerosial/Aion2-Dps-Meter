@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getServerLabel } from "@/utils/parser";
 import { getJobIconSrc } from "@/utils/icons";
 import { useSettingsStore } from "@/stores/useSettingsStore";
-import { getSkillName, SKILL_ORDER_MAP } from "@/constants/codes";
+import { getSkillName, SKILL_MAP, SKILL_ORDER_MAP } from "@/constants/codes";
 import { JoinRequestSkillSettings } from "./JoinRequestSkillSettings";
 import { SkillBadges } from "./SkillBadges";
 import { cn } from "@/lib/utils";
@@ -121,7 +121,7 @@ export const JoinRequestPanel = ({ isMinimal }: { isMinimal: boolean }) => {
           onOpenChange={setSkillSettingsOpen}
         />
       </div>
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-gutter:stable">
         {requests.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <span className="text-sm">파티 신청이 없습니다</span>
@@ -129,7 +129,7 @@ export const JoinRequestPanel = ({ isMinimal }: { isMinimal: boolean }) => {
         ) : (
           <div className="py-1">
             {[...requests].reverse().map((r, i) => {
-              const badges = Object.entries(r.skill ?? {})
+              const allBadges = Object.entries(r.skill ?? {})
                 .filter(([code]) => visibleSkillCodes.includes(Number(code)))
                 .sort(
                   ([a], [b]) =>
@@ -140,7 +140,11 @@ export const JoinRequestPanel = ({ isMinimal }: { isMinimal: boolean }) => {
                   code,
                   name: getSkillName(Number(code)) ?? code,
                   lv,
+                  isStigma: SKILL_MAP.get(Number(code))?.isStigma ?? false, 
                 }));
+
+              const normalBadges = allBadges.filter((b) => !b.isStigma);
+              const stigmaBadges = allBadges.filter((b) => b.isStigma);
 
               return (
                 <div
@@ -164,12 +168,26 @@ export const JoinRequestPanel = ({ isMinimal }: { isMinimal: boolean }) => {
                       </span>
                     </div>
 
-                    {badges.length > 0 && (
-                      <div className="mt-1.5 mb-1.5">
-                        <SkillBadges
-                          badges={badges}
-                          job={r.job ?? ""}
-                        />
+                    {(normalBadges.length > 0 || stigmaBadges.length > 0) && (
+                      <div className="mt-1.5 mb-1.5 space-y-1">
+                        {normalBadges.length > 0 && (
+                          <div>
+                            <span className="text-[10px] text-white/30 mb-0.5 block">일반</span>
+                            <SkillBadges
+                              badges={normalBadges}
+                              job={r.job ?? ""}
+                            />
+                          </div>
+                        )}
+                        {stigmaBadges.length > 0 && (
+                          <div>
+                            <span className="text-[10px] text-white/30 mb-0.5 block">스티그마</span>
+                            <SkillBadges
+                              badges={stigmaBadges}
+                              job={r.job ?? ""}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                     <TimerBar arrivedAt={r.arrivedAt} />
