@@ -14,7 +14,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
 import { JoinRequestPanel } from "@/components/joinPanel/JoinRequestPanel";
 import { cn } from "@/lib/utils";
-
+import { LockKeyhole } from "lucide-react";
 import { DebugConsole } from "./components/DebugConsole";
 export default function App() {
   const {
@@ -57,6 +57,7 @@ export default function App() {
   const meterOpacity = useSettingsStore((s) => s.meterOpacity);
   const panelOpacity = useSettingsStore((s) => s.panelOpacity);
   const meterListOpacity = useSettingsStore((s) => s.meterListOpacity);
+  const isClickThrough = useSettingsStore((s) => s.isClickThrough);
 
   const [selectedHistoryIdx, setSelectedHistoryIdx] = useState<number | undefined>(undefined);
 
@@ -127,7 +128,11 @@ export default function App() {
     window.addEventListener("keydown", handleKeydown);
     return () => window.removeEventListener("keydown", handleKeydown);
   }, [handleClose]);
-
+  useEffect(() => {
+    (window as any).onClickThroughChanged = (v: boolean) => {
+      useSettingsStore.setState({ isClickThrough: v });
+    };
+  }, []);
   // useEffect(() => {
   //   (window as any).strongReset = () => {
   //     reset();
@@ -270,6 +275,11 @@ export default function App() {
           onCheckUpdate={handleCheckUpdate}
         />
       </div>
+      {isClickThrough && (
+        <div className="absolute top-0 -right-2 z-50 pointer-events-none">
+          <LockKeyhole className="size-4 opacity-60 text-white " />
+        </div>
+      )}
     </div>
     // </TooltipProvider>
   );

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Hotkey } from "@/types";
+import type { Hotkey, ContributionMode } from "@/types";
 import { parseHotkeyString } from "@/utils/hotKey";
 import { DEFAULT_VISIBLE_SKILL_CODES } from "@/constants/codes";
 
@@ -52,7 +52,7 @@ export const DEFAULT_THEME: ThemeColors = {
 };
 
 interface SettingsState {
-  hotkey: Hotkey;
+  // hotkey: Hotkey;
   displayMode: DisplayMode;
   setDisplayMode: (mode: DisplayMode) => void;
   nameDisplay: NameDisplay;
@@ -68,7 +68,7 @@ interface SettingsState {
   isLoaded: boolean;
   detailHeight: number;
   setDetailHeight: (h: number) => void;
-  setHotkey: (h: Hotkey) => void;
+  // setHotkey: (h: Hotkey) => void;
   isMinimal: boolean;
   showCombatTimerInMinimal: boolean;
   setShowCombatTimerInMinimal: (v: boolean) => void;
@@ -99,6 +99,13 @@ interface SettingsState {
   setPanelOpacity: (v: number) => void;
   meterListOpacity: number;
   setMeterListOpacity: (v: number) => void;
+  contributionMode: ContributionMode;
+  setContributionMode: (v: ContributionMode) => void;
+  clickThroughHotkey: Hotkey;
+  setClickThroughHotkey: (h: Hotkey) => void;
+  isClickThrough: boolean;
+  isAutoHide: boolean;
+  toggleAutoHide: () => void;
 }
 
 const jb = () => (window as any).javaBridge;
@@ -127,6 +134,10 @@ const defaultSettings = {
   meterOpacity: 0.4,
   panelOpacity: 0.8,
   meterListOpacity: 1,
+  contributionMode: "contribution" as ContributionMode,
+  clickThroughHotkey: { modifiers: 2, vkCode: 0x54 },
+  isClickThrough: true,
+  isAutoHide: true,
 };
 
 export const useSettingsStore = create<SettingsState>((set) => {
@@ -134,10 +145,12 @@ export const useSettingsStore = create<SettingsState>((set) => {
     const j = jb();
     if (!j || typeof j.loadProps !== "function") return;
 
-    const raw = j.getHotkey?.();
+    // const raw = j.getHotkey?.();
     const rawHide = j.getHideHotkey?.();
-    const parsedHotkey = raw ? parseHotkeyString(raw) : null;
+    const rawClickThrough = j.getClickThroughHotkey?.();
+    // const parsedHotkey = raw ? parseHotkeyString(raw) : null;
     const parsedHideHotkey = rawHide ? parseHotkeyString(rawHide) : null;
+    const parsedClickThroughHotkey = rawClickThrough ? parseHotkeyString(rawClickThrough) : null;
     const savedIsMinimal = j.loadProps("isMinimal") === "true";
 
     const savedThemeRaw = j.loadProps?.("theme");
@@ -154,7 +167,7 @@ export const useSettingsStore = create<SettingsState>((set) => {
     } catch {}
 
     set({
-      hotkey: parsedHotkey ?? defaultSettings.hotkey,
+      // hotkey: parsedHotkey ?? defaultSettings.hotkey,
       hideHotkey: parsedHideHotkey ?? defaultSettings.hideHotkey,
       meterWidth: Number(j.loadProps?.("meterWidth")) || defaultSettings.meterWidth,
       rowHeight: Number(j.loadProps?.("rowHeight")) || defaultSettings.rowHeight,
@@ -177,7 +190,11 @@ export const useSettingsStore = create<SettingsState>((set) => {
       panelOpacity: Number(j.loadProps?.("panelOpacity")) || defaultSettings.panelOpacity,
       meterListOpacity:
         Number(j.loadProps?.("meterListOpacity")) || defaultSettings.meterListOpacity,
-
+      contributionMode:
+        (j.loadProps?.("contributionMode") as ContributionMode) ?? defaultSettings.contributionMode,
+      clickThroughHotkey: parsedClickThroughHotkey ?? defaultSettings.clickThroughHotkey,
+      isClickThrough: j.isClickThrough?.() ?? false,
+      isAutoHide: j.isAutoHide?.() ?? false,
       isLoaded: true,
     });
     clearInterval(interval);
@@ -207,13 +224,16 @@ export const useSettingsStore = create<SettingsState>((set) => {
     meterOpacity: defaultSettings.meterOpacity,
     panelOpacity: defaultSettings.panelOpacity,
     meterListOpacity: defaultSettings.meterListOpacity,
-
+    contributionMode: defaultSettings.contributionMode,
+    clickThroughHotkey: defaultSettings.clickThroughHotkey,
+    isClickThrough: defaultSettings.isClickThrough,
+    isAutoHide: defaultSettings.isAutoHide,
     isLoaded: defaultSettings.isLoaded,
 
-    setHotkey: (hotkey) => {
-      set({ hotkey });
-      jb()?.updateHotkey?.(hotkey.modifiers, hotkey.vkCode);
-    },
+    // setHotkey: (hotkey) => {
+    //   set({ hotkey });
+    //   jb()?.updateHotkey?.(hotkey.modifiers, hotkey.vkCode);
+    // },
     setHideHotkey: (hideHotkey) => {
       set({ hideHotkey });
       jb()?.updateHideHotkey?.(hideHotkey.modifiers, hideHotkey.vkCode);
@@ -303,7 +323,19 @@ export const useSettingsStore = create<SettingsState>((set) => {
       set({ meterListOpacity });
       jb()?.saveProps?.("panelOpacity", String(meterListOpacity));
     },
-
+    setContributionMode: (contributionMode) => {
+      set({ contributionMode });
+      jb()?.saveProps?.("contributionMode", contributionMode);
+    },
+    setClickThroughHotkey: (clickThroughHotkey) => {
+      set({ clickThroughHotkey });
+      jb()?.updateClickThroughHotkey?.(clickThroughHotkey.modifiers, clickThroughHotkey.vkCode);
+    },
+    toggleAutoHide: () =>
+      set((s) => {
+        jb()?.toggleAutoHide?.();
+        return { isAutoHide: !s.isAutoHide };
+      }),
     // setShowPower: (showPower) => {
     //   set({ showPower });
     //   jb()?.saveProps?.("showPower", String(showPower));

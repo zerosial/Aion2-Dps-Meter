@@ -11,6 +11,7 @@ import type {
   NameDisplay,
   ThemeColors,
 } from "@/stores/useSettingsStore";
+import type { ContributionMode } from "@/types";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { SettingsItem } from "./SettingsItem";
@@ -73,8 +74,8 @@ export const SettingsPanel = ({
   onCheckUpdate,
 }: Props) => {
   const {
-    hotkey,
-    setHotkey,
+    // hotkey,
+    // setHotkey,
     hideHotkey,
     setHideHotkey,
     displayMode,
@@ -103,8 +104,15 @@ export const SettingsPanel = ({
     setPanelOpacity,
     meterListOpacity,
     setMeterListOpacity,
+    contributionMode,
+    setContributionMode,
     // showPower,
     // setShowPower,
+    clickThroughHotkey,
+    setClickThroughHotkey,
+    isClickThrough,
+    isAutoHide,
+    toggleAutoHide,
   } = useSettingsStore();
 
   // const { pending,
@@ -116,9 +124,15 @@ export const SettingsPanel = ({
     stop: stopHide,
     reset: resetHide,
   } = useHotkeyCapture(hideHotkey);
+  const {
+    pending: pendingClickThrough,
+    start: startClickThrough,
+    stop: stopClickThrough,
+    reset: resetClickThrough,
+  } = useHotkeyCapture(clickThroughHotkey);
 
   const [snapshot] = useState(() => ({
-    hotkey,
+    // hotkey,
     hideHotkey,
     displayMode,
     headerPosition,
@@ -131,6 +145,8 @@ export const SettingsPanel = ({
     meterOpacity,
     panelOpacity,
     meterListOpacity,
+    contributionMode,
+    clickThroughHotkey,
     theme: { ...theme },
   }));
 
@@ -149,6 +165,8 @@ export const SettingsPanel = ({
   const handleSave = () => {
     // setHotkey(pending);
     setHideHotkey(pendingHide);
+    setClickThroughHotkey(pendingClickThrough);
+
     onClose();
   };
 
@@ -160,7 +178,7 @@ export const SettingsPanel = ({
     setIsMinimal(snapshot.isMinimal);
     setShowCombatTimerInMinimal(snapshot.showCombatTimerInMinimal);
     setShowTargetInfoInMinimal(snapshot.showTargetInfoInMinimal);
-    setHotkey(snapshot.hotkey);
+    // setHotkey(snapshot.hotkey);
     // reset(snapshot.hotkey);
     resetHide(snapshot.hideHotkey);
     setHeaderPosition(snapshot.headerPosition);
@@ -168,6 +186,9 @@ export const SettingsPanel = ({
     setMeterOpacity(snapshot.meterOpacity);
     setPanelOpacity(snapshot.panelOpacity);
     setMeterListOpacity(snapshot.meterListOpacity);
+    setContributionMode(snapshot.contributionMode);
+    resetClickThrough(snapshot.clickThroughHotkey);
+
     onClose();
   };
 
@@ -257,25 +278,21 @@ export const SettingsPanel = ({
 
         <div className="my-3 flex items-center gap-2">
           <div className="flex-1 h-px bg-white/10" />
-          <span className="text-xs opacity-40 px-2 shrink-0">단축키 설정</span>
+          <span className="text-xs opacity-40 px-2 shrink-0">최소화</span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
         <SettingsItem>
-          {/* <SettingsRow
-            title="새로고침"
-            align="center"
-            rightClassName="w-44">
-            <SettingsControlInput
-              readOnly
-              onFocus={start}
-              onBlur={stop}
-              value={formatHotkey(pending.modifiers, pending.vkCode)}
-              className="cursor-pointer"
-            />
-          </SettingsRow> */}
-
           <SettingsRow
-            title="최소화"
+            title="자동 숨김"
+            description="아이온2가 포커싱 상태가 아닐 경우 자동으로 숨깁니다.">
+            <Switch
+              checked={isAutoHide}
+              onCheckedChange={toggleAutoHide}
+              className="data-[state=checked]:bg-purple-500"
+            />
+          </SettingsRow>
+          <SettingsRow
+            title="최소화 단축키 설정"
             align="center"
             rightClassName="w-44">
             <SettingsControlInput
@@ -283,6 +300,36 @@ export const SettingsPanel = ({
               onFocus={startHide}
               onBlur={stopHide}
               value={formatHotkey(pendingHide.modifiers, pendingHide.vkCode)}
+              className="cursor-pointer"
+            />
+          </SettingsRow>
+        </SettingsItem>
+
+        <div className="my-3 flex items-center gap-2">
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-xs opacity-40 px-2 shrink-0">패스스루</span>
+          <div className="flex-1 h-px bg-white/10" />
+        </div>
+        <SettingsItem>
+          <SettingsRow
+            title="패스스루"
+            description="클릭이 미터기를 통과해 게임으로 전달됩니다.">
+            <Switch
+              checked={isClickThrough}
+              disabled
+              className="data-[state=checked]:bg-purple-500"
+            />
+          </SettingsRow>
+
+          <SettingsRow
+            title="패스스루 단축키 설정"
+            align="center"
+            rightClassName="w-44">
+            <SettingsControlInput
+              readOnly
+              onFocus={startClickThrough}
+              onBlur={stopClickThrough}
+              value={formatHotkey(pendingClickThrough.modifiers, pendingClickThrough.vkCode)}
               className="cursor-pointer"
             />
           </SettingsRow>
@@ -334,6 +381,31 @@ export const SettingsPanel = ({
           />
         </SettingsRow> */}
         <SettingsItem>
+          <SettingsRow
+            title="기여도 표시 방식"
+            align="center"
+            rightClassName="w-44">
+            <Select
+              value={contributionMode}
+              onValueChange={(v) => setContributionMode(v as ContributionMode)}>
+              <SelectTrigger className="text-xs w-44 bg-white/5 border-white/10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  value="contribution"
+                  className="px-4 py-2">
+                  파티 기여도 (상대)
+                </SelectItem>
+                <SelectItem
+                  value="entireContribution"
+                  className="px-4 py-2">
+                  보스 체력 기여도 (절대)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </SettingsRow>
+
           <SettingsRow
             title="표시 형식"
             align="center"

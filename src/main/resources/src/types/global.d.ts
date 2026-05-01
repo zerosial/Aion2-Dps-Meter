@@ -22,6 +22,13 @@ declare global {
 
       openBrowser?: (url: string) => void;
       exitApp?: () => void;
+
+      isClickThrough?: () => boolean;
+      getClickThroughHotkey?: () => string;
+      updateClickThroughHotkey?: (modifiers: number, vkCode: number) => void;
+
+      isAutoHide?: () => boolean;
+      toggleAutoHide?: () => void;
     };
   }
 }
