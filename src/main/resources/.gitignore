@@ -23,5 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-src/assets/skill-icons/
+**/skill-icons/
+**/codes.ts
 json/*
