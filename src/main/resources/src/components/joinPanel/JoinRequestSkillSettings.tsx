@@ -53,10 +53,10 @@ export const JoinRequestSkillSettings = ({
   };
 
   const panelClass = cn(
-    "fixed top-0 left-full ml-2 z-50",
+    "absolute top-0 left-full ml-2 z-50",
     "bg-(--panel-bg) text-white rounded-lg",
     "transition-all duration-200 ease-in-out",
-    visible ? "visible opacity-100 translate-x-2" : "invisible opacity-0 translate-x-0",
+    visible ? "visible opacity-100 translate-x-0" : "invisible opacity-0 -translate-x-1",
   );
 
   const SkillGroup = ({ label, codes, job }: { label: string; codes: number[]; job: string }) => {

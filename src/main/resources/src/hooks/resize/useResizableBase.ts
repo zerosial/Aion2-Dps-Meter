@@ -7,7 +7,13 @@ type StoreKey =
   | "detailWidth"
   | "detailHeight"
   | "joinPanelWidth"
-  | "joinPanelHeight";
+  | "joinPanelHeight"
+  | "settingsPanelWidth"
+  | "settingsPanelHeight"
+  | "historyPanelWidth"
+  | "historyPanelHeight"
+  | "updatePanelWidth"
+  | "updatePanelHeight";
 
 interface ResizeAxis {
   key: StoreKey;
@@ -28,6 +34,8 @@ export const useResizableBase = ({ axes, stopPropagation, onSave }: Options) => 
   const startY = useRef(0);
   const startVals = useRef<Partial<Record<StoreKey, number>>>({});
   const rafId = useRef<number | null>(null);
+  const axesRef = useRef(axes);
+  axesRef.current = axes;
   const [isDragging, setIsDragging] = useState(false);
   const onSaveRef = useRef(onSave);
   useEffect(() => {
@@ -41,7 +49,7 @@ export const useResizableBase = ({ axes, stopPropagation, onSave }: Options) => 
     startX.current = e.clientX;
     startY.current = e.clientY;
     const state = useSettingsStore.getState();
-    axes.forEach(({ key }) => {
+    axesRef.current.forEach(({ key }) => {
       startVals.current[key] = state[key] as number;
     });
   };
@@ -58,7 +66,7 @@ export const useResizableBase = ({ axes, stopPropagation, onSave }: Options) => 
         const dx = clientX - startX.current;
         const dy = clientY - startY.current;
         const patch: Partial<Record<StoreKey, number>> = {};
-        axes.forEach(({ key, dir, min, max }) => {
+        axesRef.current.forEach(({ key, dir, min, max }) => {
           const delta = dir === "x" ? dx : dy;
           patch[key] = Math.max(min, Math.min(max, startVals.current[key]! + delta));
         });

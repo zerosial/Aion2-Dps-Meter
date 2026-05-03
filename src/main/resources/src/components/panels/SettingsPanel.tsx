@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useHotkeyCapture } from "@/hooks/useHotkeyCapture";
 import { formatHotkey } from "@/utils/hotKey";
 import { Button } from "@/components/ui/button";
-import { X, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import type {
   DisplayMode,
   FontFamily,
@@ -33,6 +33,7 @@ interface Props {
   currentVersion?: string;
   updateInfo?: UpdateInfo | null;
   onCheckUpdate?: () => void;
+  registerHeaderClose?: (handler: (() => void) | null) => void;
 }
 
 const DISPLAY_MODES: { value: DisplayMode; label: string; description: string }[] = [
@@ -72,6 +73,7 @@ export const SettingsPanel = ({
   currentVersion,
   updateInfo,
   onCheckUpdate,
+  registerHeaderClose,
 }: Props) => {
   const {
     // hotkey,
@@ -170,7 +172,7 @@ export const SettingsPanel = ({
     onClose();
   };
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setDisplayMode(snapshot.displayMode);
     setNameDisplay(snapshot.nameDisplay);
     setFontFamily(snapshot.fontFamily);
@@ -178,8 +180,6 @@ export const SettingsPanel = ({
     setIsMinimal(snapshot.isMinimal);
     setShowCombatTimerInMinimal(snapshot.showCombatTimerInMinimal);
     setShowTargetInfoInMinimal(snapshot.showTargetInfoInMinimal);
-    // setHotkey(snapshot.hotkey);
-    // reset(snapshot.hotkey);
     resetHide(snapshot.hideHotkey);
     setHeaderPosition(snapshot.headerPosition);
     setTheme(snapshot.theme as ThemeColors);
@@ -190,21 +190,34 @@ export const SettingsPanel = ({
     resetClickThrough(snapshot.clickThroughHotkey);
 
     onClose();
-  };
+  }, [
+    onClose,
+    resetClickThrough,
+    resetHide,
+    setContributionMode,
+    setDisplayMode,
+    setFontFamily,
+    setHeaderPosition,
+    setIsMinimal,
+    setMeterListOpacity,
+    setMeterOpacity,
+    setNameDisplay,
+    setPanelOpacity,
+    setRowHeight,
+    setShowCombatTimerInMinimal,
+    setShowTargetInfoInMinimal,
+    setTheme,
+    snapshot,
+  ]);
+
+  useLayoutEffect(() => {
+    registerHeaderClose?.(handleCancel);
+    return () => registerHeaderClose?.(null);
+  }, [registerHeaderClose, handleCancel]);
 
   return (
-    <div className="font-bold  rounded-lg py-3 px-7">
-      <div className="flex items-center pb-3 border-b border-white/10">
-        <span>설정</span>
-        <Button
-          variant="ghost"
-          className="ml-auto"
-          onClick={handleCancel}>
-          <X className="scale-125" />
-        </Button>
-      </div>
-
-      <div className=" py-2 ">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
+      <div className="flex pr-4 min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar-gutter:stable py-2">
         <SettingsItem>
           <SettingsRow
             title="버전 정보"
@@ -629,8 +642,7 @@ export const SettingsPanel = ({
           </Button>
         </SettingsItem>
       </div>
-
-      <div className="pt-4 flex justify-end gap-2 w-full">
+      <div className="flex w-full min-w-0 shrink-0 justify-end gap-2 border-t border-white/10 pt-4">
         <Button
           onClick={handleCancel}
           size="lg"

@@ -115,7 +115,20 @@ interface SettingsState {
   setJoinPanelPosition: (x: number, y: number) => void;
   sidePanelX: number;
   sidePanelY: number;
+  sidePanelPositioned: boolean;
   setSidePanelPosition: (x: number, y: number) => void;
+  settingsPanelWidth: number;
+  settingsPanelHeight: number;
+  setSettingsPanelWidth: (w: number) => void;
+  setSettingsPanelHeight: (h: number) => void;
+  historyPanelWidth: number;
+  historyPanelHeight: number;
+  setHistoryPanelWidth: (w: number) => void;
+  setHistoryPanelHeight: (h: number) => void;
+  updatePanelWidth: number;
+  updatePanelHeight: number;
+  setUpdatePanelWidth: (w: number) => void;
+  setUpdatePanelHeight: (h: number) => void;
 }
 
 const jb = () => (window as any).javaBridge;
@@ -154,6 +167,13 @@ const defaultSettings = {
   joinPanelY: 0,
   sidePanelX: 0,
   sidePanelY: 0,
+  sidePanelPositioned: false,
+  settingsPanelWidth: 440,
+  settingsPanelHeight: 640,
+  historyPanelWidth: 380,
+  historyPanelHeight: 520,
+  updatePanelWidth: 300,
+  updatePanelHeight: 160,
 };
 
 export const useSettingsStore = create<SettingsState>((set) => {
@@ -181,6 +201,12 @@ export const useSettingsStore = create<SettingsState>((set) => {
     try {
       if (savedThemeRaw) savedTheme = { ...DEFAULT_THEME, ...JSON.parse(savedThemeRaw) };
     } catch {}
+
+    const savedSidePanelXRaw = j.loadProps?.("sidePanelX");
+    const savedSidePanelYRaw = j.loadProps?.("sidePanelY");
+    const hasSavedSidePanelX = savedSidePanelXRaw != null && savedSidePanelXRaw !== "";
+    const hasSavedSidePanelY = savedSidePanelYRaw != null && savedSidePanelYRaw !== "";
+    const sidePanelPositioned = hasSavedSidePanelX || hasSavedSidePanelY;
 
     set({
       // hotkey: parsedHotkey ?? defaultSettings.hotkey,
@@ -215,8 +241,21 @@ export const useSettingsStore = create<SettingsState>((set) => {
       joinPanelHeight: Number(j.loadProps?.("joinPanelHeight")) || defaultSettings.joinPanelHeight,
       joinPanelX: Number(j.loadProps?.("joinPanelX")) || defaultSettings.joinPanelX,
       joinPanelY: Number(j.loadProps?.("joinPanelY")) || defaultSettings.joinPanelY,
-      sidePanelX: Number(j.loadProps?.("sidePanelX")) || defaultSettings.sidePanelX,
-      sidePanelY: Number(j.loadProps?.("sidePanelY")) || defaultSettings.sidePanelY,
+      sidePanelX: hasSavedSidePanelX ? Number(savedSidePanelXRaw) : defaultSettings.sidePanelX,
+      sidePanelY: hasSavedSidePanelY ? Number(savedSidePanelYRaw) : defaultSettings.sidePanelY,
+      sidePanelPositioned,
+      settingsPanelWidth:
+        Number(j.loadProps?.("settingsPanelWidth")) || defaultSettings.settingsPanelWidth,
+      settingsPanelHeight:
+        Number(j.loadProps?.("settingsPanelHeight")) || defaultSettings.settingsPanelHeight,
+      historyPanelWidth:
+        Number(j.loadProps?.("historyPanelWidth")) || defaultSettings.historyPanelWidth,
+      historyPanelHeight:
+        Number(j.loadProps?.("historyPanelHeight")) || defaultSettings.historyPanelHeight,
+      updatePanelWidth:
+        Number(j.loadProps?.("updatePanelWidth")) || defaultSettings.updatePanelWidth,
+      updatePanelHeight:
+        Number(j.loadProps?.("updatePanelHeight")) || defaultSettings.updatePanelHeight,
 
       isLoaded: true,
     });
@@ -259,6 +298,13 @@ export const useSettingsStore = create<SettingsState>((set) => {
     joinPanelY: defaultSettings.joinPanelY,
     sidePanelX: defaultSettings.sidePanelX,
     sidePanelY: defaultSettings.sidePanelY,
+    sidePanelPositioned: defaultSettings.sidePanelPositioned,
+    settingsPanelWidth: defaultSettings.settingsPanelWidth,
+    settingsPanelHeight: defaultSettings.settingsPanelHeight,
+    historyPanelWidth: defaultSettings.historyPanelWidth,
+    historyPanelHeight: defaultSettings.historyPanelHeight,
+    updatePanelWidth: defaultSettings.updatePanelWidth,
+    updatePanelHeight: defaultSettings.updatePanelHeight,
 
     // setHotkey: (hotkey) => {
     //   set({ hotkey });
@@ -384,9 +430,33 @@ export const useSettingsStore = create<SettingsState>((set) => {
       jb()?.saveProps?.("joinPanelY", String(joinPanelY));
     },
     setSidePanelPosition: (sidePanelX, sidePanelY) => {
-      set({ sidePanelX, sidePanelY });
+      set({ sidePanelX, sidePanelY, sidePanelPositioned: true });
       jb()?.saveProps?.("sidePanelX", String(sidePanelX));
       jb()?.saveProps?.("sidePanelY", String(sidePanelY));
+    },
+    setSettingsPanelWidth: (settingsPanelWidth) => {
+      set({ settingsPanelWidth });
+      jb()?.saveProps?.("settingsPanelWidth", String(settingsPanelWidth));
+    },
+    setSettingsPanelHeight: (settingsPanelHeight) => {
+      set({ settingsPanelHeight });
+      jb()?.saveProps?.("settingsPanelHeight", String(settingsPanelHeight));
+    },
+    setHistoryPanelWidth: (historyPanelWidth) => {
+      set({ historyPanelWidth });
+      jb()?.saveProps?.("historyPanelWidth", String(historyPanelWidth));
+    },
+    setHistoryPanelHeight: (historyPanelHeight) => {
+      set({ historyPanelHeight });
+      jb()?.saveProps?.("historyPanelHeight", String(historyPanelHeight));
+    },
+    setUpdatePanelWidth: (updatePanelWidth) => {
+      set({ updatePanelWidth });
+      jb()?.saveProps?.("updatePanelWidth", String(updatePanelWidth));
+    },
+    setUpdatePanelHeight: (updatePanelHeight) => {
+      set({ updatePanelHeight });
+      jb()?.saveProps?.("updatePanelHeight", String(updatePanelHeight));
     },
   };
 });

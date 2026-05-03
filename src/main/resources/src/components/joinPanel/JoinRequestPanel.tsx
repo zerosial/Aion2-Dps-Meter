@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
-import { GripVertical, Settings, X } from "lucide-react";
+import { Grip, Settings, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getServerLabel } from "@/utils/parser";
 import { getJobIconSrc } from "@/utils/icons";
@@ -10,8 +10,9 @@ import { JoinRequestSkillSettings } from "./JoinRequestSkillSettings";
 import { SkillBadges } from "./SkillBadges";
 import { cn } from "@/lib/utils";
 import { getClassColor } from "@/utils/classColor";
-import { useResizableJoinPanel } from "@/hooks/useResizableJoinPanel";
-import { useDraggablePanel } from "@/hooks/useDraggablePanel";
+import { useResizableJoinPanel } from "@/hooks/resize/useResizableJoinPanel";
+import { useDraggablePanel } from "@/hooks/drag/useDraggablePanel";
+import { ResizeHandle } from "../ResizeHandle";
 
 const TOTAL_SEC = 20;
 
@@ -103,14 +104,13 @@ export const JoinRequestPanel = () => {
       onMouseDown={(e) => e.stopPropagation()}>
       <div>
         <div
-          className="drag-handle flex items-center justify-center w-full py-1 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-70 transition-opacity"
-          onMouseDown={onMouseDownHandle}
-          title="드래그하여 이동">
-          <GripVertical className="size-4 rotate-90" />
-        </div>
-
-        <div
-          className={`${headerClass} flex items-center px-3 py-1.5 border-b border-white/10 rounded-t-lg`}>
+          className={`${headerClass} flex items-center justify-between px-3 py-1.5 border-b border-white/10 rounded-t-lg`}>
+          <div
+            className="drag-handle mr-1 cursor-grab active:cursor-grabbing opacity-50 hover:opacity-100 transition-opacity shrink-0"
+            onMouseDown={onMouseDownHandle}
+            title="드래그하여 이동">
+            <Grip className="size-4 rotate-90" />
+          </div>
           <span className={`pl-2 flex-1 text-sm`}>파티 신청</span>
           <div className="flex items-center gap-2 h-8">
             <span className={`text-xs w-8 text-center`}>{requests.length}건</span>
@@ -118,7 +118,7 @@ export const JoinRequestPanel = () => {
             <Button
               size="icon"
               variant="ghost"
-              className={`rounded-full`}
+              className={`rounded-full `}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={() => setSkillSettingsOpen((v) => !v)}>
               <Settings className="size-4.5" />
@@ -128,7 +128,7 @@ export const JoinRequestPanel = () => {
               variant="ghost"
               className={`rounded-full`}
               onClick={() => setOpen(false)}>
-              <X className="size-4.5" />
+              <CircleX className="size-4.5" />
             </Button>
           </div>
         </div>
@@ -215,34 +215,7 @@ export const JoinRequestPanel = () => {
           </div>
         )}
       </div>
-      <div
-        onMouseDown={onMouseDownCorner}
-        className="resizeHandle absolute bottom-1 right-2 w-5 h-5 cursor-se-resize opacity-40 hover:opacity-100 transition-all duration-200">
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none">
-          <circle
-            cx="17"
-            cy="17"
-            r="2.5"
-            fill="rgba(255,255,255,0.9)"
-          />
-          <circle
-            cx="10"
-            cy="17"
-            r="2.5"
-            fill="rgba(255,255,255,0.5)"
-          />
-          <circle
-            cx="17"
-            cy="10"
-            r="2.5"
-            fill="rgba(255,255,255,0.5)"
-          />
-        </svg>
-      </div>
+      <ResizeHandle onMouseDown={onMouseDownCorner}></ResizeHandle>
     </div>
   );
 };

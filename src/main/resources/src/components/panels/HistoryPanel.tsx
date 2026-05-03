@@ -1,15 +1,8 @@
-
-import {
-  X,
-  //  Upload, Loader2, TriangleAlert, House
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useHistory } from "@/hooks/useHistory";
 import bossIcon from "@/assets/bossIcon.png";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 
 interface Props {
-  onClose: () => void;
   formatBattleTime: (ms: number) => string;
   onSelectHistory: (idx: number, report: any) => void;
 }
@@ -23,7 +16,7 @@ const formatDateTime = (ms: number) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
-export const HistoryPanel = ({ onClose, formatBattleTime, onSelectHistory }: Props) => {
+export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
   const { historyList, loading } = useHistory();
   const theme = useSettingsStore((s) => s.theme);
   // const [uploadStatus, setUploadStatus] = useState<Record<number, UploadStatus>>({});
@@ -50,31 +43,21 @@ export const HistoryPanel = ({ onClose, formatBattleTime, onSelectHistory }: Pro
   // };
 
   return (
-    <div className=" text-white font-bold rounded-lg p-4 ">
-      <div className="flex items-center pb-3 border-b border-white/10">
-        <span>전투 기록</span>
-        <Button
-          className="ml-auto"
-          variant="ghost"
-          onClick={onClose}>
-          <X className="scale-125" />
-        </Button>
-      </div>
-
-      <div className="pt-3 pr-2 flex flex-col gap-2 min-h-0">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden ">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden scrollbar-gutter:stable pt-1 pr-2">
         {loading && <div className="text-center opacity-40 py-8">불러오는 중</div>}
         {!loading && historyList.length === 0 && (
-          <div className="text-center opacity-40 py-8">전투 기록이 없습니다</div>
+          <div className="flex-1 text-center opacity-40 py-8 flex items-center justify-center">
+            전투 기록이 없습니다
+          </div>
         )}
         {historyList.map((item) => {
-          // const status = uploadStatus[item.idx] ?? "idle";
-          // const slug = uploadSlugs[item.idx];
-
           return (
-            <div className="flex items-center gap-2">
+            <div
+              key={item.idx}
+              className="flex items-center gap-2">
               <div
                 onClick={() => onSelectHistory(item.idx, item.raw)}
-                key={item.idx}
                 className="relative w-full px-3 rounded-lg overflow-hidden bg-black/30 cursor-pointer hover:brightness-125 transition-all duration-200"
                 style={{ minHeight: 52 }}>
                 <div

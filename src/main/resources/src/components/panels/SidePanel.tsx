@@ -1,13 +1,28 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CheckStatus, Player, UpdateInfo, PanelType, DownloadState } from "@/types";
 import { DetailsPanel } from "./DetailsPanel";
 import { SettingsPanel } from "./SettingsPanel.tsx";
-import { UpdatePanel } from "./UpdatePanel";
+import { UpdatePanel, UPDATE_PANEL_DOT_CLS, UPDATE_PANEL_HEADER_TITLE } from "./UpdatePanel";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { HistoryPanel } from "./HistoryPanel";
-import { useDraggablePanel } from "@/hooks/useDraggablePanel";
-import { GripVertical } from "lucide-react";
+import { useDraggablePanel } from "@/hooks/drag/useDraggablePanel";
+import { useSidePanelResize } from "@/hooks/resize/useSidePanelResize";
+import { CircleX, Grip } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
+import { Button } from "@/components/ui/button";
+import { ResizeHandle } from "../ResizeHandle.tsx";
+
+const SIDE_BODY_VIEWPORT = "min-h-0 shrink-0 flex flex-col overflow-hidden";
+
+const SIDE_OUTER = "flex h-full min-h-0 w-full flex-col overflow-hidden";
+const DEFAULT_SIDE_PANEL_GAP = 8;
+
+const SIDE_SHELL = {
+  details: `${SIDE_OUTER} py-4 px-7 text-white font-bold`,
+  settings: `${SIDE_OUTER} pl-7 pr-3  pt-3 pb-6 font-bold rounded-lg`,
+  history: `${SIDE_OUTER} text-white font-bold rounded-lg p-4`,
+  update: `${SIDE_OUTER} font-semibold`,
+} as const;
 
 interface SidePanelProps {
   type: PanelType;
@@ -51,18 +66,35 @@ export const SidePanel = ({
   const [currentType, setCurrentType] = useState<PanelType>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
 
-  // const meterWidth = useSettingsStore((s) => s.meterWidth);
   const sidePanelX = useSettingsStore((s) => s.sidePanelX);
   const sidePanelY = useSettingsStore((s) => s.sidePanelY);
+  const sidePanelPositioned = useSettingsStore((s) => s.sidePanelPositioned);
+  const meterWidth = useSettingsStore((s) => s.meterWidth);
   const setSidePanelPosition = useSettingsStore((s) => s.setSidePanelPosition);
+  const defaultSidePanelX = meterWidth + DEFAULT_SIDE_PANEL_GAP;
+  const defaultSidePanelY = 8;
 
   const { panelRef, onMouseDownHandle, isPositioned } = useDraggablePanel({
-    initialX: sidePanelX,
-    initialY: sidePanelY,
+    initialX: sidePanelPositioned ? sidePanelX : defaultSidePanelX,
+    initialY: sidePanelPositioned ? sidePanelY : defaultSidePanelY,
     onPositionChange: setSidePanelPosition,
   });
 
-  // JoinRequestPanel과 동일한 타이밍/방식으로 통일
+  const { panelWidth, panelHeight, onMouseDownCorner } = useSidePanelResize(currentType);
+
+  const settingsHeaderCloseRef = useRef<(() => void) | null>(null);
+  const registerSettingsHeaderClose = useCallback((handler: (() => void) | null) => {
+    settingsHeaderCloseRef.current = handler;
+  }, []);
+
+  const handleHeaderClose = () => {
+    if (currentType === "settings") {
+      settingsHeaderCloseRef.current?.();
+      return;
+    }
+    onClose();
+  };
+
   useEffect(() => {
     if (type) {
       setCurrentType(type);
@@ -81,67 +113,131 @@ export const SidePanel = ({
   }, [type, player]);
   if (!rendered) return null;
 
+  const updateShowClose =
+    currentType === "update" &&
+    downloadState.status !== "downloading" &&
+    downloadState.status !== "complete";
+
+  const detailsTitle =
+    currentType === "details"
+      ? currentPlayer
+        ? `${currentPlayer.name} 상세내역`
+        : "상세내역"
+      : "";
+
   const positionStyle: React.CSSProperties = isPositioned
-    ? { left: sidePanelX, top: sidePanelY }
-    : { left: sidePanelX, top: sidePanelY }; // 저장값 항상 사용
+    ? {
+        left: sidePanelPositioned ? sidePanelX : defaultSidePanelX,
+        top: sidePanelPositioned ? sidePanelY : defaultSidePanelY,
+        width: panelWidth,
+      }
+    : { width: panelWidth };
+
   const rootClass = cn(
-    "text-[rgba(215,215,215)] rounded-lg font-bold", // relative 제거
+    "text-[rgba(215,215,215)] rounded-lg font-bold",
     "transition-opacity duration-200 ease-in-out",
     "bg-(--panel-bg)",
     visible ? "opacity-100" : "opacity-0 pointer-events-none",
   );
+
   return (
     <div
       ref={panelRef}
       style={positionStyle}
-      className={cn(rootClass, "fixed left-0 flex flex-col")}
+      className={cn(rootClass, "fixed left-0 top-0 flex flex-col overflow-hidden ")}
       onMouseDown={(e) => e.stopPropagation()}>
-      {/* 드래그 핸들 */}
-      <div
-        className="drag-handle flex items-center justify-center w-full py-1 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-70 transition-opacity"
-        onMouseDown={onMouseDownHandle}
-        title="드래그하여 이동">
-        <GripVertical className="size-4 rotate-90" />
+      <div className="flex items-center shrink-0 pl-5 px-3 py-1.5 border-b border-white/10 gap-2">
+        <div
+          className="drag-handle mr-1 cursor-grab active:cursor-grabbing opacity-70 hover:opacity-70 transition-opacity shrink-0"
+          onMouseDown={onMouseDownHandle}
+          title="드래그하여 이동">
+          <Grip className="size-4 rotate-90" />
+        </div>
+        {currentType === "update" ? (
+          <>
+            <div
+              className={`w-2 h-2 rounded-full shrink-0 ${UPDATE_PANEL_DOT_CLS[downloadState.status]}`}
+            />
+            <span className="flex-1 text-sm truncate">
+              {UPDATE_PANEL_HEADER_TITLE[downloadState.status]}
+            </span>
+          </>
+        ) : (
+          <span className="flex-1  text-sm truncate">
+            {currentType === "details"
+              ? detailsTitle
+              : currentType === "settings"
+                ? "설정"
+                : currentType === "history"
+                  ? "전투 기록"
+                  : null}
+          </span>
+        )}
+        {!(currentType === "update" && !updateShowClose) && (
+          <>
+            <Button
+              size="icon"
+              variant="ghost"
+              className={`rounded-full`}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={handleHeaderClose}>
+              <CircleX className="size-4.5" />
+            </Button>
+          </>
+        )}
       </div>
-      <div className="flex-1 min-h-0 overflow-auto">
+
+      <div
+        style={{ height: panelHeight }}
+        className={SIDE_BODY_VIEWPORT}>
         {currentType === "details" && (
-          <DetailsPanel
+          <div
             key={currentPlayer?.id}
-            player={currentPlayer}
-            players={players}
-            onClose={onClose}
-            combatTime={combatTime}
-            historyIdx={historyIdx}
-          />
+            className={SIDE_SHELL.details}>
+            <DetailsPanel
+              player={currentPlayer}
+              players={players}
+              combatTime={combatTime}
+              historyIdx={historyIdx}
+            />
+          </div>
         )}
         {currentType === "settings" && (
-          <SettingsPanel
-            onClose={onClose}
-            currentVersion={currentVersion}
-            updateInfo={updateInfo}
-            onCheckUpdate={onCheckUpdate}
-          />
+          <div className={SIDE_SHELL.settings}>
+            <SettingsPanel
+              onClose={onClose}
+              currentVersion={currentVersion}
+              updateInfo={updateInfo}
+              onCheckUpdate={onCheckUpdate}
+              registerHeaderClose={registerSettingsHeaderClose}
+            />
+          </div>
         )}
         {currentType === "update" && (
-          <UpdatePanel
-            updateInfo={updateInfo ?? null}
-            checkStatus={checkStatus}
-            onClose={onClose}
-            downloadState={downloadState}
-            onRetryDownload={onRetryDownload}
-            onUpdate={onUpdate ?? (() => {})}
-            onOpenReleasePage={onOpenReleasePage}
-          />
+          <div className={SIDE_SHELL.update}>
+            <UpdatePanel
+              updateInfo={updateInfo ?? null}
+              checkStatus={checkStatus}
+              onClose={onClose}
+              downloadState={downloadState}
+              onRetryDownload={onRetryDownload}
+              onUpdate={onUpdate ?? (() => {})}
+              onOpenReleasePage={onOpenReleasePage}
+            />
+          </div>
         )}
         {currentType === "history" && (
-          <HistoryPanel
+          <div
             key={currentPlayer?.id}
-            onClose={onClose}
-            onSelectHistory={onSelectHistory}
-            formatBattleTime={formatBattleTime}
-          />
+            className={SIDE_SHELL.history}>
+            <HistoryPanel
+              formatBattleTime={formatBattleTime}
+              onSelectHistory={onSelectHistory}
+            />
+          </div>
         )}
       </div>
+      {currentType !== "update" && <ResizeHandle onMouseDown={onMouseDownCorner}></ResizeHandle>}
     </div>
   );
 };

@@ -1,9 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Player, Details } from "@/types";
 import { useDetails } from "@/hooks/useDetails";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useResizableDetail } from "@/hooks/useResizableDetail";
 import { BuffRateSection } from "@/components/BuffRateSection";
 import {
   Table,
@@ -19,7 +16,6 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 
 interface Props {
   player: Player | null;
-  onClose: () => void;
   onReady?: () => void;
   players: Player[];
 
@@ -29,16 +25,13 @@ interface Props {
 
 export const DetailsPanel = ({
   player,
-  onClose,
   players,
   combatTime,
   historyIdx,
 }: Props) => {
   const { getDetails } = useDetails();
   const [details, setDetails] = useState<Details | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [hasScroll, setHasScroll] = useState(false);
-  const { detailHeight, detailWidth, onMouseDownCorner } = useResizableDetail();
+  const detailWidth = useSettingsStore((s) => s.detailWidth);
   const buffColumns = detailWidth >= 1200 ? 4 : detailWidth >= 900 ? 3 : detailWidth >= 700 ? 2 : 1;
   const isCompact = detailWidth < 700;
   const [openPanel, setOpenPanel] = useState<string>("skills");
@@ -52,33 +45,14 @@ export const DetailsPanel = ({
     getDetails(player, combatTime, historyIdx).then(setDetails);
   }, [player]);
 
-  useLayoutEffect(() => {
-    if (scrollRef.current) {
-      setHasScroll(scrollRef.current.scrollHeight > scrollRef.current.clientHeight);
-    }
-  }, [details?.skills]);
-
-  const FIXED_AREA_HEIGHT = isCompact ? 220 : 264;
-
   if (!player || !details) return null;
 
   const buffCount = (details.buffOperatingRate ?? []).length;
   const debuffCount = (details.debuffOperatingRate ?? []).length;
 
   return (
-    <div
-      style={{ width: detailWidth }}
-      className="  text-white font-bold rounded-lg py-4 px-7">
-      <div className="flex items-center pb-3 border-b border-white/10">
-        <span>{player.name} 상세내역</span>
-        <Button
-          className="ml-auto"
-          variant="ghost"
-          onClick={onClose}>
-          <X className="scale-125" />
-        </Button>
-      </div>
-      <div className="grid grid-cols-4 gap-2 py-3">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+      <div className="grid grid-cols-4 gap-2 py-3 shrink-0">
         {[
           { label: "누적 피해량", value: details.totalDmg.toLocaleString() },
           {
@@ -104,10 +78,7 @@ export const DetailsPanel = ({
           </div>
         ))}
       </div>
-      <div
-        ref={scrollRef}
-        style={{ height: Math.max(100, detailHeight - FIXED_AREA_HEIGHT) }}
-        className={`overflow-y-auto ${hasScroll ? "pr-1" : ""}`}>
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-gutter:stable">
         <Accordion
           type="single"
           className="gap-2"
@@ -350,34 +321,6 @@ export const DetailsPanel = ({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </div>
-      <div
-        onMouseDown={onMouseDownCorner}
-        className="resizeHandle absolute bottom-2 right-2 w-5 h-5 cursor-se-resize opacity-40 hover:opacity-100 transition-all duration-200">
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none">
-          <circle
-            cx="17"
-            cy="17"
-            r="2.5"
-            fill="rgba(255,255,255,0.9)"
-          />
-          <circle
-            cx="10"
-            cy="17"
-            r="2.5"
-            fill="rgba(255,255,255,0.5)"
-          />
-          <circle
-            cx="17"
-            cy="10"
-            r="2.5"
-            fill="rgba(255,255,255,0.5)"
-          />
-        </svg>
       </div>
     </div>
   );
