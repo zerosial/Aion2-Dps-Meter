@@ -1,5 +1,5 @@
 import type { Player, Skill, Details, BuffEntry } from "@/types";
-import { useDebugStore } from "../stores/debugStore";
+// import { useDebugStore } from "../stores/debugStore";
 
 export const useDetails = () => {
   const getDetails = async (
@@ -7,7 +7,7 @@ export const useDetails = () => {
     combatTime: string = "00:00",
     historyIdx?: number,
   ): Promise<Details> => {
-    const addLog = useDebugStore.getState().addLog;
+    // const addLog = useDebugStore.getState().addLog;
 
     const raw =
       historyIdx !== undefined
@@ -22,9 +22,9 @@ export const useDetails = () => {
         ? await window.javaBridge?.getBossBuffOperatingRate?.(historyIdx)
         : await window.javaBridge?.getLiveBossBuffOperatingRate?.();
 
-    addLog(`${historyIdx ? `히스토리 디테일 ${raw}` : `일반 detail rowID${row.id} ${raw}`}`);
-    addLog(`${historyIdx ? ` ${buffRaw}` : `일반 detail rowID${row.id} ${buffRaw}`}`);
-    addLog(`${historyIdx ? ` ${debuffRaw}` : `일반 detail rowID${row.id} ${debuffRaw}`}`);
+    // addLog(`${historyIdx ? `히스토리 디테일 ${raw}` : `일반 detail rowID${row.id} ${raw}`}`);
+    // addLog(`${historyIdx ? ` ${buffRaw}` : `일반 detail rowID${row.id} ${buffRaw}`}`);
+    // addLog(`${historyIdx ? ` ${debuffRaw}` : `일반 detail rowID${row.id} ${debuffRaw}`}`);
     let detailObj = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (!detailObj || typeof detailObj !== "object") detailObj = {};
 
@@ -36,7 +36,7 @@ export const useDetails = () => {
     let totalBack = 0;
     let totalPerfect = 0;
     let totalDouble = 0;
-
+    // let totalMultiHit = 0;
     const pct = (num: number, den: number) => (den > 0 ? Math.round((num / den) * 1000) / 10 : 0);
     const pctInt = (num: number, den: number) => (den > 0 ? Math.round((num / den) * 100) : 0);
 
@@ -52,6 +52,7 @@ export const useDetails = () => {
         back?: number;
         perfect?: number;
         double?: number;
+        // multiHitTimes?: number;
       },
       isDot = false,
     ) => {
@@ -65,6 +66,8 @@ export const useDetails = () => {
       const perfect = skill.perfect ?? 0;
       const double_ = skill.double ?? 0;
       const shardTimes = skill.shardTimes ?? 0;
+      // const multiHitTimes = skill.multiHitTimes ?? 0;
+
       totalDmg += dmg;
       if (!isDot) {
         totalTimes += time;
@@ -73,6 +76,7 @@ export const useDetails = () => {
         totalBack += back;
         totalPerfect += perfect;
         totalDouble += double_;
+        // totalMultiHit += multiHitTimes;
       }
 
       skills.push({
@@ -85,12 +89,14 @@ export const useDetails = () => {
         perfect,
         shardTimes,
         double: double_,
+        // multiHitTimes,
         dmg,
         critPct: isDot ? "-" : pctInt(crit, time),
         parryPct: isDot ? "-" : pctInt(parry, time),
         perfectPct: isDot ? "-" : pctInt(perfect, time),
         doublePct: isDot ? "-" : pctInt(double_, time),
         backPct: isDot ? "-" : pctInt(back, time),
+        // multiHitPct: isDot ? "-" : pctInt(multiHitTimes, time),
       });
     };
 
@@ -111,6 +117,7 @@ export const useDetails = () => {
         back: Number(v.backTimes) || 0,
         perfect: Number(v.perfectTimes) || 0,
         double: Number(v.doubleTimes) || 0,
+        // multiHitTimes: Number(v.multiHitTimes) || 0,
       });
 
       if (Number(v.dotDamageAmount) > 0) {
@@ -146,6 +153,7 @@ export const useDetails = () => {
       totalBackPct: pct(totalBack, totalTimes),
       totalPerfectPct: pct(totalPerfect, totalTimes),
       totalDoublePct: pct(totalDouble, totalTimes),
+      // totalMultiHitPct: pct(totalMultiHit, totalTimes),
       combatTime,
       skills: skills.sort((a, b) => b.dmg - a.dmg),
       buffOperatingRate,

@@ -42,12 +42,14 @@ export interface Skill {
   back: number;
   perfect: number;
   double: number;
+  // multiHitTimes: number;
   dmg: number;
   critPct: number | "-";
   parryPct: number | "-";
   perfectPct: number | "-";
   doublePct: number | "-";
   backPct: number | "-";
+  // multiHitPct: number | "-";
 }
 
 export interface Details {
@@ -62,6 +64,7 @@ export interface Details {
   buffOperatingRate: BuffEntry[];
   skills: Skill[];
   debuffOperatingRate: BuffEntry[];
+  // totalMultiHitPct: number;
 }
 
 export interface Version {

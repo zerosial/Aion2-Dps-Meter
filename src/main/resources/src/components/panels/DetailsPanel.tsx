@@ -97,8 +97,9 @@ export const DetailsPanel = ({
                 : `${details.contributionPct.toFixed(1)}%`,
           },
           { label: "치명타 비율", value: `${details.totalCritPct}%` },
-          { label: "완벽 비율", value: `${details.totalPerfectPct}%` },
           { label: "강타 비율", value: `${details.totalDoublePct}%` },
+          // { label: "다단히트 비율", value: `${details.totalMultiHitPct}%` },
+          { label: "완벽 비율", value: `${details.totalPerfectPct}%` },
           { label: "백어택 비율", value: `${details.totalBackPct}%` },
           { label: "보스 막기비율", value: `${details.totalParryPct}%` },
           { label: "전투시간", value: combatTime },
@@ -184,11 +185,15 @@ export const DetailsPanel = ({
                       const stats = [
                         { label: "명중", value: s.time },
                         // { label: "봉혼석", value: s.shardTimes },
-                        { label: "치명", value: s.critPct === "-" ? "-" : `${s.critPct}%` },
-                        { label: "패리", value: s.parryPct === "-" ? "-" : `${s.parryPct}%` },
-                        { label: "완벽", value: s.perfectPct === "-" ? "-" : `${s.perfectPct}%` },
+                        { label: "치명타", value: s.critPct === "-" ? "-" : `${s.critPct}%` },
                         { label: "강타", value: s.doublePct === "-" ? "-" : `${s.doublePct}%` },
+                        // {
+                        //   label: "다단",
+                        //   value: s.multiHitPct === "-" ? "-" : `${s.multiHitPct}%`,
+                        // },
+                        { label: "완벽", value: s.perfectPct === "-" ? "-" : `${s.perfectPct}%` },
                         { label: "백어택", value: s.backPct === "-" ? "-" : `${s.backPct}%` },
+                        { label: "패리", value: s.parryPct === "-" ? "-" : `${s.parryPct}%` },
                       ];
 
                       return (
@@ -265,16 +270,19 @@ export const DetailsPanel = ({
                           치명타
                         </TableHead>
                         <TableHead className="py-2 text-center font-bold text-white">
-                          패리
+                          강타
+                        </TableHead>
+                        <TableHead className="py-2 text-center font-bold text-white">
+                          다단 히트
                         </TableHead>
                         <TableHead className="py-2 text-center font-bold text-white">
                           완벽
                         </TableHead>
                         <TableHead className="py-2 text-center font-bold text-white">
-                          강타
+                          백어택
                         </TableHead>
                         <TableHead className="py-2 text-center font-bold text-white">
-                          백어택
+                          패리
                         </TableHead>
                         <TableHead className="py-2 font-bold text-center text-white">
                           누적 피해량
@@ -312,10 +320,11 @@ export const DetailsPanel = ({
                               s.time,
                               // s.shardTimes,
                               s.critPct === "-" ? "-" : `${s.critPct}%`,
-                              s.parryPct === "-" ? "-" : `${s.parryPct}%`,
-                              s.perfectPct === "-" ? "-" : `${s.perfectPct}%`,
                               s.doublePct === "-" ? "-" : `${s.doublePct}%`,
+                              // s.multiHitPct === "-" ? "-" : `${s.multiHitPct}%`,
+                              s.perfectPct === "-" ? "-" : `${s.perfectPct}%`,
                               s.backPct === "-" ? "-" : `${s.backPct}%`,
+                              s.parryPct === "-" ? "-" : `${s.parryPct}%`,
                             ].map((val, ci) => (
                               <TableCell
                                 key={ci}
