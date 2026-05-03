@@ -215,6 +215,7 @@ export default function App() {
           "--meter-bg": `rgba(12,22,40,${meterOpacity})`,
           "--panel-bg": `rgba(12,22,40,${panelOpacity})`,
           "--join-panel-bg": `rgba(12,22,40,${joinPanelOpacity})`,
+          visibility: isLoaded ? "visible" : "hidden",
         } as React.CSSProperties
       }
       className={rootClass}>
