@@ -15,6 +15,16 @@ import { useDraggablePanel } from "@/hooks/drag/useDraggablePanel";
 import { ResizeHandle } from "../ResizeHandle";
 
 const TOTAL_SEC = 20;
+const DEFAULT_JOIN_PANEL_GAP = 8;
+const DEFAULT_JOIN_PANEL_X = 0;
+const DEFAULT_JOIN_PANEL_Y = 8;
+
+const getDefaultJoinPanelY = () => {
+  const meterList = document.querySelector("[data-meter-list-anchor]");
+  if (!meterList) return DEFAULT_JOIN_PANEL_Y;
+
+  return meterList.getBoundingClientRect().bottom + DEFAULT_JOIN_PANEL_GAP;
+};
 
 const TimerBar = ({ arrivedAt }: { arrivedAt: number }) => {
   const calc = () => {
@@ -64,11 +74,14 @@ export const JoinRequestPanel = () => {
 
   const joinPanelX = useSettingsStore((s) => s.joinPanelX);
   const joinPanelY = useSettingsStore((s) => s.joinPanelY);
+  const joinPanelPositioned = useSettingsStore((s) => s.joinPanelPositioned);
   const setJoinPanelPosition = useSettingsStore((s) => s.setJoinPanelPosition);
+  const defaultJoinPanelX = DEFAULT_JOIN_PANEL_X;
+  const defaultJoinPanelY = getDefaultJoinPanelY() + 8;
 
-  const { panelRef, onMouseDownHandle, isPositioned } = useDraggablePanel({
-    initialX: joinPanelX,
-    initialY: joinPanelY,
+  const { panelRef, onMouseDownHandle } = useDraggablePanel({
+    initialX: joinPanelPositioned ? joinPanelX : defaultJoinPanelX,
+    initialY: joinPanelPositioned ? joinPanelY : defaultJoinPanelY,
     onPositionChange: setJoinPanelPosition,
   });
 
@@ -84,9 +97,12 @@ export const JoinRequestPanel = () => {
 
   if (!rendered) return null;
 
-  const positionStyle: React.CSSProperties = isPositioned
-    ? { left: joinPanelX, top: joinPanelY, width: joinPanelWidth, height: joinPanelHeight }
-    : { width: joinPanelWidth, height: joinPanelHeight };
+  const positionStyle: React.CSSProperties = {
+    left: joinPanelPositioned ? joinPanelX : defaultJoinPanelX,
+    top: joinPanelPositioned ? joinPanelY : defaultJoinPanelY,
+    width: joinPanelWidth,
+    height: joinPanelHeight,
+  };
 
   const rootClass = cn(
     "text-[rgba(215,215,215)] rounded-lg font-bold",
@@ -100,7 +116,7 @@ export const JoinRequestPanel = () => {
     <div
       ref={panelRef}
       style={positionStyle}
-      className={cn(rootClass, "fixed bottom-0 left-0 flex flex-col")}
+      className={cn(rootClass, "fixed flex flex-col")}
       onMouseDown={(e) => e.stopPropagation()}>
       <div>
         <div
@@ -138,7 +154,7 @@ export const JoinRequestPanel = () => {
           onOpenChange={setSkillSettingsOpen}
         />
       </div>
-      <div className="flex-1 overflow-y-auto min-h-0 scrollbar-gutter:stable">
+      <div className="pt-2 flex-1 overflow-y-auto min-h-0 scrollbar-gutter:stable">
         {requests.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <span className="text-sm">파티 신청이 없습니다</span>

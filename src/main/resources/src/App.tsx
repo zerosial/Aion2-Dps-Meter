@@ -208,7 +208,9 @@ export default function App() {
             />
           </div>
         )}
-        <div style={{ opacity: meterListOpacity }}>
+        <div
+          data-meter-list-anchor
+          style={{ opacity: meterListOpacity }}>
           {players.length > 0 && (!isMinimal || showTargetInfoInMinimal) && (
             <TargetInfo
               targetName={targetName}

@@ -112,6 +112,7 @@ interface SettingsState {
   setJoinPanelHeight: (h: number) => void;
   joinPanelX: number;
   joinPanelY: number;
+  joinPanelPositioned: boolean;
   setJoinPanelPosition: (x: number, y: number) => void;
   sidePanelX: number;
   sidePanelY: number;
@@ -162,9 +163,10 @@ const defaultSettings = {
   isClickThrough: false,
   isAutoHide: true,
   joinPanelWidth: 400,
-  joinPanelHeight: 480,
+  joinPanelHeight: 330,
   joinPanelX: 0,
   joinPanelY: 0,
+  joinPanelPositioned: false,
   sidePanelX: 0,
   sidePanelY: 0,
   sidePanelPositioned: false,
@@ -207,6 +209,11 @@ export const useSettingsStore = create<SettingsState>((set) => {
     const hasSavedSidePanelX = savedSidePanelXRaw != null && savedSidePanelXRaw !== "";
     const hasSavedSidePanelY = savedSidePanelYRaw != null && savedSidePanelYRaw !== "";
     const sidePanelPositioned = hasSavedSidePanelX || hasSavedSidePanelY;
+    const savedJoinPanelXRaw = j.loadProps?.("joinPanelX");
+    const savedJoinPanelYRaw = j.loadProps?.("joinPanelY");
+    const hasSavedJoinPanelX = savedJoinPanelXRaw != null && savedJoinPanelXRaw !== "";
+    const hasSavedJoinPanelY = savedJoinPanelYRaw != null && savedJoinPanelYRaw !== "";
+    const joinPanelPositioned = hasSavedJoinPanelX || hasSavedJoinPanelY;
 
     set({
       // hotkey: parsedHotkey ?? defaultSettings.hotkey,
@@ -239,8 +246,9 @@ export const useSettingsStore = create<SettingsState>((set) => {
       isAutoHide: j.isAutoHide?.() ?? false,
       joinPanelWidth: Number(j.loadProps?.("joinPanelWidth")) || defaultSettings.joinPanelWidth,
       joinPanelHeight: Number(j.loadProps?.("joinPanelHeight")) || defaultSettings.joinPanelHeight,
-      joinPanelX: Number(j.loadProps?.("joinPanelX")) || defaultSettings.joinPanelX,
-      joinPanelY: Number(j.loadProps?.("joinPanelY")) || defaultSettings.joinPanelY,
+      joinPanelX: hasSavedJoinPanelX ? Number(savedJoinPanelXRaw) : defaultSettings.joinPanelX,
+      joinPanelY: hasSavedJoinPanelY ? Number(savedJoinPanelYRaw) : defaultSettings.joinPanelY,
+      joinPanelPositioned,
       sidePanelX: hasSavedSidePanelX ? Number(savedSidePanelXRaw) : defaultSettings.sidePanelX,
       sidePanelY: hasSavedSidePanelY ? Number(savedSidePanelYRaw) : defaultSettings.sidePanelY,
       sidePanelPositioned,
@@ -296,6 +304,7 @@ export const useSettingsStore = create<SettingsState>((set) => {
     joinPanelHeight: defaultSettings.joinPanelHeight,
     joinPanelX: defaultSettings.joinPanelX,
     joinPanelY: defaultSettings.joinPanelY,
+    joinPanelPositioned: defaultSettings.joinPanelPositioned,
     sidePanelX: defaultSettings.sidePanelX,
     sidePanelY: defaultSettings.sidePanelY,
     sidePanelPositioned: defaultSettings.sidePanelPositioned,
@@ -425,7 +434,7 @@ export const useSettingsStore = create<SettingsState>((set) => {
       jb()?.saveProps?.("joinPanelHeight", String(joinPanelHeight));
     },
     setJoinPanelPosition: (joinPanelX, joinPanelY) => {
-      set({ joinPanelX, joinPanelY });
+      set({ joinPanelX, joinPanelY, joinPanelPositioned: true });
       jb()?.saveProps?.("joinPanelX", String(joinPanelX));
       jb()?.saveProps?.("joinPanelY", String(joinPanelY));
     },
