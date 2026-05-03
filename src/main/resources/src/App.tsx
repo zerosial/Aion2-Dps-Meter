@@ -197,6 +197,7 @@ export default function App() {
       }
       className={rootClass}>
       <div
+        data-meter-root-anchor
         className={meterClass}
         style={{ width: meterWidth }}>
         {headerPosition === "top" && (
@@ -210,9 +211,7 @@ export default function App() {
             />
           </div>
         )}
-        <div
-          data-meter-list-anchor
-          style={{ opacity: meterListOpacity }}>
+        <div style={{ opacity: meterListOpacity }}>
           {players.length > 0 && (!isMinimal || showTargetInfoInMinimal) && (
             <TargetInfo
               targetName={targetName}

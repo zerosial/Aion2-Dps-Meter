@@ -113,6 +113,8 @@ export const SettingsPanel = ({
     isClickThrough,
     isAutoHide,
     toggleAutoHide,
+    resetJoinPanelPosition,
+    resetSidePanelPosition,
   } = useSettingsStore();
 
   // const { pending,
@@ -616,6 +618,22 @@ export const SettingsPanel = ({
             className="w-full opacity-50 hover:opacity-100  hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
             <RotateCcw className="w-3 h-3" />
             테마 초기화
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetJoinPanelPosition}
+            className="w-full opacity-50 hover:opacity-100  hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
+            <RotateCcw className="w-3 h-3" />
+            파티 신청 위치 초기화
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetSidePanelPosition}
+            className="w-full opacity-50 hover:opacity-100  hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
+            <RotateCcw className="w-3 h-3" />
+            사이드 패널 위치 초기화
           </Button>
         </SettingsItem>
       </div>

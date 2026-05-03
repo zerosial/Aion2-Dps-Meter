@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Player } from "@/types";
 import { parseCombatData } from "../utils/parser";
-import { useDebugStore } from "../stores/debugStore";
+// import { useDebugStore } from "../stores/debugStore";
 
 const POLL_MS = 300;
 
@@ -15,7 +15,7 @@ export const useMeter = () => {
   const resetTimestampRef = useRef<number>(0);
 
   const [battleTime, setBattleTime] = useState<number | null>(null);
-  const { addLog } = useDebugStore();
+  // const { addLog } = useDebugStore();
   const isCollapseRef = useRef(false);
   const lastBattleTimeRef = useRef<number | null>(null);
   const combatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,7 +51,7 @@ export const useMeter = () => {
   const fetchDps = () => {
     if (isCollapseRef.current) return;
     const raw = window.javaBridge?.getDpsData?.();
-    addLog(` ${raw}`);
+    // addLog(` ${raw}`);
     if (typeof raw !== "string") return;
     if (raw === lastJsonRef.current) {
       return;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useState } from "react";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
 import { Grip, Settings, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,55 @@ const TOTAL_SEC = 20;
 const DEFAULT_JOIN_PANEL_GAP = 8;
 const DEFAULT_JOIN_PANEL_X = 0;
 const DEFAULT_JOIN_PANEL_Y = 8;
+const JOIN_PANEL_HEADER_HEIGHT = 44;
 
-const getDefaultJoinPanelY = () => {
-  const meterList = document.querySelector("[data-meter-list-anchor]");
-  if (!meterList) return DEFAULT_JOIN_PANEL_Y;
+const getMeasuredDefaultJoinPanelY = () => {
+  const meterRoot = document.querySelector("[data-meter-root-anchor]");
+  if (!meterRoot) return DEFAULT_JOIN_PANEL_Y;
 
-  return meterList.getBoundingClientRect().bottom + DEFAULT_JOIN_PANEL_GAP;
+  return meterRoot.getBoundingClientRect().bottom + DEFAULT_JOIN_PANEL_GAP;
+};
+
+const useDefaultJoinPanelY = () => {
+  const [defaultY, setDefaultY] = useState(DEFAULT_JOIN_PANEL_Y);
+
+  useLayoutEffect(() => {
+    const meterRoot = document.querySelector("[data-meter-root-anchor]");
+    if (!meterRoot) return;
+
+    let rafId: number | null = null;
+    const updateDefaultY = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        setDefaultY(getMeasuredDefaultJoinPanelY());
+        rafId = null;
+      });
+    };
+
+    updateDefaultY();
+
+    const resizeObserver = new ResizeObserver(updateDefaultY);
+    resizeObserver.observe(meterRoot);
+    window.addEventListener("resize", updateDefaultY);
+
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateDefaultY);
+    };
+  }, []);
+
+  return defaultY;
+};
+
+const clampPanelPosition = (x: number, y: number, width: number, height: number) => {
+  const maxX = Math.max(0, window.innerWidth - width);
+  const maxY = Math.max(0, window.innerHeight - height);
+
+  return {
+    x: Math.min(Math.max(0, x), maxX),
+    y: Math.min(Math.max(0, y), maxY),
+  };
 };
 
 const TimerBar = ({ arrivedAt }: { arrivedAt: number }) => {
@@ -65,7 +108,7 @@ const TimerBar = ({ arrivedAt }: { arrivedAt: number }) => {
   );
 };
 
-export const JoinRequestPanel = () => {
+export const JoinRequestPanel = memo(() => {
   const { requests, isOpen, setOpen } = useJoinRequestStore();
   const visibleSkillCodes = useSettingsStore((s) => s.visibleSkillCodes);
   const [skillSettingsOpen, setSkillSettingsOpen] = useState(false);
@@ -80,12 +123,19 @@ export const JoinRequestPanel = () => {
   const setJoinPanelOpacity = useSettingsStore((s) => s.setJoinPanelOpacity);
   const setJoinPanelPosition = useSettingsStore((s) => s.setJoinPanelPosition);
   const defaultJoinPanelX = DEFAULT_JOIN_PANEL_X;
-  const defaultJoinPanelY = getDefaultJoinPanelY() + 8;
+  const defaultJoinPanelY = useDefaultJoinPanelY();
+  const { x: panelX, y: panelY } = clampPanelPosition(
+    joinPanelPositioned ? joinPanelX : defaultJoinPanelX,
+    joinPanelPositioned ? joinPanelY : defaultJoinPanelY,
+    joinPanelWidth,
+    JOIN_PANEL_HEADER_HEIGHT,
+  );
 
   const { panelRef, onMouseDownHandle } = useDraggablePanel({
-    initialX: joinPanelPositioned ? joinPanelX : defaultJoinPanelX,
-    initialY: joinPanelPositioned ? joinPanelY : defaultJoinPanelY,
+    initialX: panelX,
+    initialY: panelY,
     onPositionChange: setJoinPanelPosition,
+    viewportConstraintHeight: JOIN_PANEL_HEADER_HEIGHT,
   });
 
   useEffect(() => {
@@ -101,8 +151,8 @@ export const JoinRequestPanel = () => {
   if (!rendered) return null;
 
   const positionStyle: React.CSSProperties = {
-    left: joinPanelPositioned ? joinPanelX : defaultJoinPanelX,
-    top: joinPanelPositioned ? joinPanelY : defaultJoinPanelY,
+    left: panelX,
+    top: panelY,
     width: joinPanelWidth,
     height: joinPanelHeight,
   };
@@ -250,4 +300,4 @@ export const JoinRequestPanel = () => {
       <ResizeHandle onMouseDown={onMouseDownCorner}></ResizeHandle>
     </div>
   );
-};
+});

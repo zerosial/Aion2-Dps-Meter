@@ -4,14 +4,26 @@ interface UseDraggablePanelOptions {
   initialX: number;
   initialY: number;
   onPositionChange: (x: number, y: number) => void;
+  minX?: number;
+  minY?: number;
+  constrainToViewport?: boolean;
+  viewportConstraintWidth?: number;
+  viewportConstraintHeight?: number;
 }
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 export const useDraggablePanel = ({
   initialX,
   initialY,
   onPositionChange,
+  minX = 0,
+  minY = 0,
+  constrainToViewport = true,
+  viewportConstraintWidth,
+  viewportConstraintHeight,
 }: UseDraggablePanelOptions) => {
-  const posRef = useRef({ x: initialX, y: initialY });
+  const posRef = useRef({ x: Math.max(minX, initialX), y: Math.max(minY, initialY) });
   const panelRef = useRef<HTMLDivElement>(null);
 
   const isPositioned = initialX !== 0 || initialY !== 0;
@@ -30,16 +42,20 @@ export const useDraggablePanel = ({
       const startMouseY = e.clientY;
       const startPanelX = rect.left;
       const startPanelY = rect.top;
+      const constraintWidth = viewportConstraintWidth ?? rect.width;
+      const constraintHeight = viewportConstraintHeight ?? rect.height;
+      const maxX = constrainToViewport ? Math.max(minX, window.innerWidth - constraintWidth) : Infinity;
+      const maxY = constrainToViewport ? Math.max(minY, window.innerHeight - constraintHeight) : Infinity;
 
-      posRef.current = { x: startPanelX, y: startPanelY };
+      posRef.current = { x: clamp(startPanelX, minX, maxX), y: clamp(startPanelY, minY, maxY) };
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
         if (rafId.current !== null) cancelAnimationFrame(rafId.current);
         rafId.current = requestAnimationFrame(() => {
           const deltaX = moveEvent.clientX - startMouseX;
           const deltaY = moveEvent.clientY - startMouseY;
-          const nextX = startPanelX + deltaX;
-          const nextY = startPanelY + deltaY;
+          const nextX = clamp(startPanelX + deltaX, minX, maxX);
+          const nextY = clamp(startPanelY + deltaY, minY, maxY);
           posRef.current = { x: nextX, y: nextY };
           if (panel) {
             panel.style.left = `${nextX}px`;
@@ -63,7 +79,14 @@ export const useDraggablePanel = ({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [onPositionChange],
+    [
+      constrainToViewport,
+      minX,
+      minY,
+      onPositionChange,
+      viewportConstraintHeight,
+      viewportConstraintWidth,
+    ],
   );
 
   return { panelRef, onMouseDownHandle, isPositioned };

@@ -116,10 +116,12 @@ interface SettingsState {
   joinPanelY: number;
   joinPanelPositioned: boolean;
   setJoinPanelPosition: (x: number, y: number) => void;
+  resetJoinPanelPosition: () => void;
   sidePanelX: number;
   sidePanelY: number;
   sidePanelPositioned: boolean;
   setSidePanelPosition: (x: number, y: number) => void;
+  resetSidePanelPosition: () => void;
   settingsPanelWidth: number;
   settingsPanelHeight: number;
   setSettingsPanelWidth: (w: number) => void;
@@ -462,10 +464,28 @@ export const useSettingsStore = create<SettingsState>((set) => {
       jb()?.saveProps?.("joinPanelX", String(joinPanelX));
       jb()?.saveProps?.("joinPanelY", String(joinPanelY));
     },
+    resetJoinPanelPosition: () => {
+      set({
+        joinPanelX: defaultSettings.joinPanelX,
+        joinPanelY: defaultSettings.joinPanelY,
+        joinPanelPositioned: false,
+      });
+      jb()?.saveProps?.("joinPanelX", "");
+      jb()?.saveProps?.("joinPanelY", "");
+    },
     setSidePanelPosition: (sidePanelX, sidePanelY) => {
       set({ sidePanelX, sidePanelY, sidePanelPositioned: true });
       jb()?.saveProps?.("sidePanelX", String(sidePanelX));
       jb()?.saveProps?.("sidePanelY", String(sidePanelY));
+    },
+    resetSidePanelPosition: () => {
+      set({
+        sidePanelX: defaultSettings.sidePanelX,
+        sidePanelY: defaultSettings.sidePanelY,
+        sidePanelPositioned: false,
+      });
+      jb()?.saveProps?.("sidePanelX", "");
+      jb()?.saveProps?.("sidePanelY", "");
     },
     setSettingsPanelWidth: (settingsPanelWidth) => {
       set({ settingsPanelWidth });

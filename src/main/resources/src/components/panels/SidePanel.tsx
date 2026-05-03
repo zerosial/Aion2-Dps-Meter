@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { CheckStatus, Player, UpdateInfo, PanelType, DownloadState } from "@/types";
 import { DetailsPanel } from "./DetailsPanel";
 import { SettingsPanel } from "./SettingsPanel.tsx";
@@ -17,6 +17,25 @@ const SIDE_BODY_VIEWPORT = "min-h-0 shrink-0 flex flex-col overflow-hidden";
 
 const SIDE_OUTER = "flex h-full min-h-0 w-full flex-col overflow-hidden";
 const DEFAULT_SIDE_PANEL_GAP = 8;
+const DEFAULT_SIDE_PANEL_Y = 8;
+const SIDE_PANEL_HEADER_HEIGHT = 44;
+
+const getDefaultSidePanelX = (fallbackWidth: number) => {
+  const meterRoot = document.querySelector("[data-meter-root-anchor]");
+  if (!meterRoot) return fallbackWidth + DEFAULT_SIDE_PANEL_GAP;
+
+  return meterRoot.getBoundingClientRect().right;
+};
+
+const clampPanelPosition = (x: number, y: number, width: number, height: number) => {
+  const maxX = Math.max(0, window.innerWidth - width);
+  const maxY = Math.max(0, window.innerHeight - height);
+
+  return {
+    x: Math.min(Math.max(0, x), maxX),
+    y: Math.min(Math.max(0, y), maxY),
+  };
+};
 
 const SIDE_SHELL = {
   details: `${SIDE_OUTER} py-4 px-7 text-white font-bold`,
@@ -44,7 +63,7 @@ interface SidePanelProps {
   players: Player[];
 }
 
-export const SidePanel = ({
+const SidePanelComponent = ({
   type,
   player,
   players,
@@ -74,16 +93,22 @@ export const SidePanel = ({
   const panelOpacity = useSettingsStore((s) => s.panelOpacity);
   const setPanelOpacity = useSettingsStore((s) => s.setPanelOpacity);
   const setSidePanelPosition = useSettingsStore((s) => s.setSidePanelPosition);
-  const defaultSidePanelX = meterWidth + DEFAULT_SIDE_PANEL_GAP;
-  const defaultSidePanelY = 8;
+  const defaultSidePanelX = getDefaultSidePanelX(meterWidth);
+  const defaultSidePanelY = DEFAULT_SIDE_PANEL_Y;
 
-  const { panelRef, onMouseDownHandle, isPositioned } = useDraggablePanel({
+  const { panelRef, onMouseDownHandle } = useDraggablePanel({
     initialX: sidePanelPositioned ? sidePanelX : defaultSidePanelX,
     initialY: sidePanelPositioned ? sidePanelY : defaultSidePanelY,
     onPositionChange: setSidePanelPosition,
   });
 
   const { panelWidth, panelHeight, onMouseDownCorner } = useSidePanelResize(currentType);
+  const { x: panelX, y: panelY } = clampPanelPosition(
+    sidePanelPositioned ? sidePanelX : defaultSidePanelX,
+    sidePanelPositioned ? sidePanelY : defaultSidePanelY,
+    panelWidth,
+    panelHeight + SIDE_PANEL_HEADER_HEIGHT,
+  );
 
   const settingsHeaderCloseRef = useRef<(() => void) | null>(null);
   const registerSettingsHeaderClose = useCallback((handler: (() => void) | null) => {
@@ -128,13 +153,11 @@ export const SidePanel = ({
         : "상세내역"
       : "";
 
-  const positionStyle: React.CSSProperties = isPositioned
-    ? {
-        left: sidePanelPositioned ? sidePanelX : defaultSidePanelX,
-        top: sidePanelPositioned ? sidePanelY : defaultSidePanelY,
-        width: panelWidth,
-      }
-    : { width: panelWidth };
+  const positionStyle: React.CSSProperties = {
+    left: panelX,
+    top: panelY,
+    width: panelWidth,
+  };
 
   const rootClass = cn(
     "text-[rgba(215,215,215)] rounded-lg font-bold",
@@ -257,3 +280,50 @@ export const SidePanel = ({
     </div>
   );
 };
+
+const areSidePanelPropsEqual = (prev: SidePanelProps, next: SidePanelProps) => {
+  if (prev.type !== next.type) return false;
+  if (prev.player !== next.player) return false;
+  if (prev.onClose !== next.onClose) return false;
+
+  if (next.type === "details") {
+    return (
+      prev.players === next.players &&
+      prev.combatTime === next.combatTime &&
+      prev.historyIdx === next.historyIdx &&
+      prev.formatBattleTime === next.formatBattleTime &&
+      prev.onSelectHistory === next.onSelectHistory
+    );
+  }
+
+  if (next.type === "update") {
+    return (
+      prev.updateInfo === next.updateInfo &&
+      prev.downloadState === next.downloadState &&
+      prev.checkStatus === next.checkStatus &&
+      prev.currentVersion === next.currentVersion &&
+      prev.onUpdate === next.onUpdate &&
+      prev.onRetryDownload === next.onRetryDownload &&
+      prev.onOpenReleasePage === next.onOpenReleasePage
+    );
+  }
+
+  if (next.type === "settings") {
+    return (
+      prev.currentVersion === next.currentVersion &&
+      prev.updateInfo === next.updateInfo &&
+      prev.onCheckUpdate === next.onCheckUpdate
+    );
+  }
+
+  if (next.type === "history") {
+    return (
+      prev.formatBattleTime === next.formatBattleTime &&
+      prev.onSelectHistory === next.onSelectHistory
+    );
+  }
+
+  return true;
+};
+
+export const SidePanel = memo(SidePanelComponent, areSidePanelPropsEqual);
