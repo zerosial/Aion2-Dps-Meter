@@ -10,6 +10,7 @@ import { CombatTimer } from "@/components/CombatTimer.tsx";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 import { useResizable } from "@/hooks/resize/useResizable";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useShallow } from "zustand/react/shallow";
 // import { TooltipProvider } from "@/components/ui/tooltip";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
 import { JoinRequestPanel } from "@/components/joinPanel/JoinRequestPanel";
@@ -48,22 +49,39 @@ export default function App() {
   const clearAll = useJoinRequestStore((s) => s.clearAll);
   const refuseRequest = useJoinRequestStore((s) => s.refuseRequest);
 
-  const headerPosition = useSettingsStore((s) => s.headerPosition);
-  const windowX = useSettingsStore((s) => s.windowX);
-  const windowY = useSettingsStore((s) => s.windowY);
-  const isLoaded = useSettingsStore((s) => s.isLoaded);
-
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const { meterWidth, onMouseDown, isDragging } = useResizable();
-  const rowHeight = useSettingsStore((s) => s.rowHeight);
-  const isMinimal = useSettingsStore((s) => s.isMinimal);
-  const showCombatTimerInMinimal = useSettingsStore((s) => s.showCombatTimerInMinimal);
-  const showTargetInfoInMinimal = useSettingsStore((s) => s.showTargetInfoInMinimal);
-  const meterOpacity = useSettingsStore((s) => s.meterOpacity);
-  const panelOpacity = useSettingsStore((s) => s.panelOpacity);
-  const joinPanelOpacity = useSettingsStore((s) => s.joinPanelOpacity);
-  const meterListOpacity = useSettingsStore((s) => s.meterListOpacity);
-  const isClickThrough = useSettingsStore((s) => s.isClickThrough);
+  const {
+    headerPosition,
+    windowX,
+    windowY,
+    isLoaded,
+    rowHeight,
+    isMinimal,
+    showCombatTimerInMinimal,
+    showTargetInfoInMinimal,
+    meterOpacity,
+    panelOpacity,
+    joinPanelOpacity,
+    meterListOpacity,
+    isClickThrough,
+  } = useSettingsStore(
+    useShallow((s) => ({
+      headerPosition: s.headerPosition,
+      windowX: s.windowX,
+      windowY: s.windowY,
+      isLoaded: s.isLoaded,
+      rowHeight: s.rowHeight,
+      isMinimal: s.isMinimal,
+      showCombatTimerInMinimal: s.showCombatTimerInMinimal,
+      showTargetInfoInMinimal: s.showTargetInfoInMinimal,
+      meterOpacity: s.meterOpacity,
+      panelOpacity: s.panelOpacity,
+      joinPanelOpacity: s.joinPanelOpacity,
+      meterListOpacity: s.meterListOpacity,
+      isClickThrough: s.isClickThrough,
+    })),
+  );
 
   const [selectedHistoryIdx, setSelectedHistoryIdx] = useState<number | undefined>(undefined);
 

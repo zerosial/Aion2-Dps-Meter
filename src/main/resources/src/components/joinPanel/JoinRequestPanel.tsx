@@ -1,10 +1,11 @@
-import { memo, useEffect, useLayoutEffect, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
 import { Grip, Settings, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getServerLabel } from "@/utils/parser";
 import { getJobIconSrc } from "@/utils/icons";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useShallow } from "zustand/react/shallow";
 import { getSkillName, SKILL_MAP, SKILL_ORDER_MAP } from "@/constants/codes";
 import { JoinRequestSkillSettings } from "./JoinRequestSkillSettings";
 import { SkillBadges } from "./SkillBadges";
@@ -70,23 +71,8 @@ const clampPanelPosition = (x: number, y: number, width: number, height: number)
   };
 };
 
-const TimerBar = ({ arrivedAt }: { arrivedAt: number }) => {
-  const calc = () => {
-    const elapsed = (Date.now() - arrivedAt) / 1000;
-    return Math.max(0, TOTAL_SEC - elapsed);
-  };
-
-  const [remaining, setRemaining] = useState(calc);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const r = calc();
-      setRemaining(r);
-      if (r <= 0) clearInterval(interval);
-    }, 200);
-    return () => clearInterval(interval);
-  }, [arrivedAt]);
-
+const TimerBar = ({ arrivedAt, now }: { arrivedAt: number; now: number }) => {
+  const remaining = Math.max(0, TOTAL_SEC - (now - arrivedAt) / 1000);
   const pct = (remaining / TOTAL_SEC) * 100;
   const color =
     pct > 50
@@ -99,7 +85,7 @@ const TimerBar = ({ arrivedAt }: { arrivedAt: number }) => {
     <div className="flex items-center gap-2">
       <div className="relative flex-1 h-1.5 rounded bg-white/10 overflow-hidden">
         <div
-          className="absolute inset-y-0 left-0 rounded transition-all duration-200"
+          className="absolute inset-y-0 left-0 rounded transition-[width] duration-300"
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
@@ -112,18 +98,31 @@ export const JoinRequestPanel = memo(() => {
   const requests = useJoinRequestStore((s) => s.requests);
   const isOpen = useJoinRequestStore((s) => s.isOpen);
   const setOpen = useJoinRequestStore((s) => s.setOpen);
-  const visibleSkillCodes = useSettingsStore((s) => s.visibleSkillCodes);
   const [skillSettingsOpen, setSkillSettingsOpen] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const { joinPanelHeight, joinPanelWidth, onMouseDownCorner } = useResizableJoinPanel();
 
-  const joinPanelX = useSettingsStore((s) => s.joinPanelX);
-  const joinPanelY = useSettingsStore((s) => s.joinPanelY);
-  const joinPanelPositioned = useSettingsStore((s) => s.joinPanelPositioned);
-  const joinPanelOpacity = useSettingsStore((s) => s.joinPanelOpacity);
-  const setJoinPanelOpacity = useSettingsStore((s) => s.setJoinPanelOpacity);
-  const setJoinPanelPosition = useSettingsStore((s) => s.setJoinPanelPosition);
+  const {
+    visibleSkillCodes,
+    joinPanelX,
+    joinPanelY,
+    joinPanelPositioned,
+    joinPanelOpacity,
+    setJoinPanelOpacity,
+    setJoinPanelPosition,
+  } = useSettingsStore(
+    useShallow((s) => ({
+      visibleSkillCodes: s.visibleSkillCodes,
+      joinPanelX: s.joinPanelX,
+      joinPanelY: s.joinPanelY,
+      joinPanelPositioned: s.joinPanelPositioned,
+      joinPanelOpacity: s.joinPanelOpacity,
+      setJoinPanelOpacity: s.setJoinPanelOpacity,
+      setJoinPanelPosition: s.setJoinPanelPosition,
+    })),
+  );
   const defaultJoinPanelX = DEFAULT_JOIN_PANEL_X;
   const defaultJoinPanelY = useDefaultJoinPanelY();
   const { x: panelX, y: panelY } = clampPanelPosition(
@@ -141,14 +140,30 @@ export const JoinRequestPanel = memo(() => {
   });
 
   useEffect(() => {
+    let showTimer: ReturnType<typeof setTimeout> | null = null;
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
     if (isOpen) {
       setRendered(true);
-      setTimeout(() => setVisible(true), 10);
+      showTimer = setTimeout(() => setVisible(true), 10);
     } else {
       setVisible(false);
-      setTimeout(() => setRendered(false), 200);
+      hideTimer = setTimeout(() => setRendered(false), 200);
     }
+    return () => {
+      if (showTimer) clearTimeout(showTimer);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!rendered || requests.length === 0) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [rendered, requests.length]);
+
+  const orderedRequests = useMemo(() => [...requests].reverse(), [requests]);
+  const latestArrivedAt = orderedRequests[0]?.arrivedAt ?? 0;
+  const effectiveNow = Math.max(now, latestArrivedAt);
 
   if (!rendered) return null;
 
@@ -162,7 +177,7 @@ export const JoinRequestPanel = memo(() => {
   const rootClass = cn(
     "text-[rgba(215,215,215)] rounded-lg font-bold",
     "transition-opacity duration-200 ease-in-out",
-    "bg-(--join-panel-bg)",
+    "bg-(--join-panel-bg) ",
     visible ? "opacity-100" : "opacity-0 pointer-events-none",
   );
 
@@ -222,14 +237,14 @@ export const JoinRequestPanel = memo(() => {
           onOpenChange={setSkillSettingsOpen}
         />
       </div>
-      <div className="pt-2 flex-1 overflow-y-auto min-h-0 scrollbar-gutter:stable">
+      <div className="pt-2 mb-4 flex-1 overflow-y-auto min-h-0 scrollbar-gutter:stable">
         {requests.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <span className="text-sm">파티 신청이 없습니다</span>
           </div>
         ) : (
           <div className="py-1">
-            {[...requests].reverse().map((r, i) => {
+            {orderedRequests.map((r, i) => {
               const allBadges = Object.entries(r.skill ?? {})
                 .filter(([code]) => visibleSkillCodes.includes(Number(code)))
                 .sort(
@@ -291,7 +306,10 @@ export const JoinRequestPanel = memo(() => {
                         )}
                       </div>
                     )}
-                    <TimerBar arrivedAt={r.arrivedAt} />
+                    <TimerBar
+                      arrivedAt={r.arrivedAt}
+                      now={effectiveNow}
+                    />
                   </div>
                 </div>
               );

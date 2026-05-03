@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { BuffRateBar } from "@/components/BuffRateBar";
 import type { BuffEntry } from "@/types";
 import { JOB_PREFIX_MAP } from "@/constants/codes";
@@ -17,6 +18,7 @@ interface SectionGridProps {
   entries: BuffEntry[];
   gridClass: string;
 }
+
 const getCodePrefix = (id: string): number | null => {
   const num = parseInt(id, 10);
   if (isNaN(num)) return null;
@@ -53,6 +55,11 @@ const categorize = (
 };
 
 const SectionGrid = ({ label, entries, gridClass }: SectionGridProps) => {
+  const sortedEntries = useMemo(
+    () => [...entries].sort((a, b) => b.operatingRate - a.operatingRate),
+    [entries],
+  );
+
   if (entries.length === 0) return null;
   return (
     <div>
@@ -61,21 +68,20 @@ const SectionGrid = ({ label, entries, gridClass }: SectionGridProps) => {
         <span className="ml-1.5 opacity-60">({entries.length})</span>
       </div>
       <div className={`grid ${gridClass} gap-x-4 gap-y-0.5`}>
-        {entries
-          .sort((a, b) => b.operatingRate - a.operatingRate)
-          .map((val) => (
-            <BuffRateBar
-              key={val.code}
-              id={val.code}
-              code={val.code}
-              rate={val.operatingRate}
-              info={{ name: val.name, summary: val.summary, effect: val.effect }}
-            />
-          ))}
+        {sortedEntries.map((val) => (
+          <BuffRateBar
+            key={val.code}
+            id={val.code}
+            code={val.code}
+            rate={val.operatingRate}
+            info={{ name: val.name, summary: val.summary, effect: val.effect }}
+          />
+        ))}
       </div>
     </div>
   );
 };
+
 export const BuffRateSection = ({
   buffOperatingRate,
   playerId,

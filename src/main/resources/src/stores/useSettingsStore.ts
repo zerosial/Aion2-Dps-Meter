@@ -145,6 +145,7 @@ interface SettingsState {
 }
 
 const jb = () => (window as any).javaBridge;
+const MAX_INIT_ATTEMPTS = 200;
 
 const defaultSettings = {
   hotkey: { modifiers: 2, vkCode: 0x52 },
@@ -184,7 +185,7 @@ const defaultSettings = {
   sidePanelX: 0,
   sidePanelY: 0,
   sidePanelPositioned: false,
-  settingsPanelWidth: 440,
+  settingsPanelWidth: 380,
   settingsPanelHeight: 640,
   historyPanelWidth: 380,
   historyPanelHeight: 520,
@@ -193,9 +194,17 @@ const defaultSettings = {
 };
 
 export const useSettingsStore = create<SettingsState>((set) => {
+  let initAttempts = 0;
   const interval = setInterval(() => {
     const j = jb();
-    if (!j || typeof j.loadProps !== "function") return;
+    if (!j || typeof j.loadProps !== "function") {
+      initAttempts += 1;
+      if (initAttempts >= MAX_INIT_ATTEMPTS) {
+        set({ isLoaded: true });
+        clearInterval(interval);
+      }
+      return;
+    }
 
     // const raw = j.getHotkey?.();
     const rawHide = j.getHideHotkey?.();

@@ -2,6 +2,7 @@ import { memo } from "react";
 import bossIcon from "@/assets/bossIcon.png";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { formatAmount } from "@/utils/format";
+import { useShallow } from "zustand/react/shallow";
 
 interface Props {
   targetName: string;
@@ -11,8 +12,12 @@ interface Props {
 }
 
 export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Props) => {
-  const theme = useSettingsStore((s) => s.theme);
-  const targetInfoDisplayMode = useSettingsStore((s) => s.targetInfoDisplayMode);
+  const { theme, targetInfoDisplayMode } = useSettingsStore(
+    useShallow((s) => ({
+      theme: s.theme,
+      targetInfoDisplayMode: s.targetInfoDisplayMode,
+    })),
+  );
   const displayName = targetName || "타겟 인식 실패";
   const isFailed = !targetName;
 
@@ -22,7 +27,7 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
 
   const renderHpValue = (value: string) => (
     <span
-      className="text-end whitespace-nowrap"
+      className=" text-end whitespace-nowrap"
       style={{ color: theme.bossRightValue, fontSize }}>
       {value}
     </span>
@@ -30,7 +35,7 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
 
   const renderDivider = () => (
     <span
-      className="mx-0.5"
+      className="mx-0"
       style={{ color: theme.bossRightValue, fontSize }}>
       /
     </span>
@@ -41,36 +46,36 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
       case "hp_percent":
         return (
           <>
-            {renderHpValue(formatAmount(remainHp))}
-            {renderDivider()}
-            {renderHpValue(formatAmount(maxHp))}
-            {renderHpValue(percent)}
+            <span>{renderHpValue(formatAmount(remainHp))}</span>
+            <span className="mx-0.5">{renderDivider()}</span>
+            <span>{renderHpValue(formatAmount(maxHp))}</span>
+            <span className="ml-2">{renderHpValue(percent)}</span>
           </>
         );
       case "remain_full_percent":
         return (
           <>
-            {renderHpValue(remainHp.toLocaleString())}
-            {renderHpValue(percent)}
+            <span>{renderHpValue(remainHp.toLocaleString())}</span>
+            <span className="ml-2">{renderHpValue(percent)}</span>
           </>
         );
       case "remain_percent":
         return (
           <>
-            {renderHpValue(formatAmount(remainHp))}
-            {renderHpValue(percent)}
+            <span>{renderHpValue(formatAmount(remainHp))}</span>
+            <span className="ml-2">{renderHpValue(percent)}</span>
           </>
         );
       case "percent":
-        return renderHpValue(percent);
+        return <span className="ml-2">{renderHpValue(percent)}</span>;
       case "hp_full_percent":
       default:
         return (
           <>
-            {renderHpValue(remainHp.toLocaleString())}
-            {renderDivider()}
-            {renderHpValue(maxHp.toLocaleString())}
-            {renderHpValue(percent)}
+            <span>{renderHpValue(remainHp.toLocaleString())}</span>
+            <span className="mx-0.5">{renderDivider()}</span>
+            <span>{renderHpValue(maxHp.toLocaleString())}</span>
+            <span className="ml-2">{renderHpValue(percent)}</span>
           </>
         );
     }
@@ -104,7 +109,7 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
         </span>
 
         {!isFailed && (
-          <div className="ml-auto font-bold text-shadow-meter shrink-0 flex items-center gap-2">
+          <div className="ml-auto font-bold text-shadow-meter shrink-0 flex items-center ">
             {renderStats()}
           </div>
         )}

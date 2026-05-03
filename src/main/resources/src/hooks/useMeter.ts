@@ -5,25 +5,89 @@ import { parseCombatData } from "../utils/parser";
 
 const POLL_MS = 300;
 
+interface MeterSnapshot {
+  players: Player[];
+  targetName: string;
+  remainHp: number;
+  maxHp: number;
+  isInCombat: boolean;
+  battleTime: number | null;
+}
+
+const initialSnapshot: MeterSnapshot = {
+  players: [],
+  targetName: "",
+  remainHp: 0,
+  maxHp: 0,
+  isInCombat: false,
+  battleTime: null,
+};
+
+const isPlayerSame = (a: Player, b: Player) =>
+  a.id === b.id &&
+  a.name === b.name &&
+  a.job === b.job &&
+  a.server === b.server &&
+  a.dps === b.dps &&
+  a.amount === b.amount &&
+  a.damageContribution === b.damageContribution &&
+  a.entireContribution === b.entireContribution &&
+  a.isUser === b.isUser;
+
+const arePlayersSame = (prev: Player[], next: Player[]) =>
+  prev.length === next.length && prev.every((p, i) => isPlayerSame(p, next[i]));
+
+const stabilizePlayers = (prev: Player[], next: Player[]) => {
+  if (arePlayersSame(prev, next)) return prev;
+  if (prev.length === 0 || next.length === 0) return next;
+
+  const prevById = new Map(prev.map((p) => [p.id, p]));
+  let reusedAny = false;
+  const stable = next.map((row) => {
+    const prevRow = prevById.get(row.id);
+    if (!prevRow || !isPlayerSame(prevRow, row)) return row;
+    reusedAny = true;
+    return prevRow;
+  });
+
+  return reusedAny ? stable : next;
+};
+
 export const useMeter = () => {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [targetName, setTargetName] = useState<string>("");
-  const [remainHp, setRemainHp] = useState<number>(0);
-  const [maxHp, setMaxHp] = useState<number>(0);
+  const [snapshot, setSnapshot] = useState<MeterSnapshot>(initialSnapshot);
   // const [isCollapse, setIsCollapse] = useState(false);
-  const [isInCombat, setIsInCombat] = useState(false);
   const resetTimestampRef = useRef<number>(0);
 
-  const [battleTime, setBattleTime] = useState<number | null>(null);
   // const { addLog } = useDebugStore();
   const isCollapseRef = useRef(false);
   const lastBattleTimeRef = useRef<number | null>(null);
   const combatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInCombatRef = useRef(false);
 
   const lastJsonRef = useRef<string | null>(null);
   const snapshotRef = useRef<Player[] | null>(null);
   const resetPendingRef = useRef(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const setSnapshotIfChanged = useCallback((patch: Partial<MeterSnapshot>) => {
+    setSnapshot((prev) => {
+      const nextPlayers = patch.players ? stabilizePlayers(prev.players, patch.players) : prev.players;
+      const next: MeterSnapshot = { ...prev, ...patch, players: nextPlayers };
+      isInCombatRef.current = next.isInCombat;
+      if (
+        prev.targetName === next.targetName &&
+        prev.remainHp === next.remainHp &&
+        prev.maxHp === next.maxHp &&
+        prev.isInCombat === next.isInCombat &&
+        prev.battleTime === next.battleTime &&
+        arePlayersSame(prev.players, next.players)
+      ) {
+        return prev;
+      }
+      if (patch.players) snapshotRef.current = nextPlayers;
+      return next;
+    });
+  }, []);
 
   const formatBattleTime = useCallback((ms: number | null | undefined) => {
     if (!ms || !Number.isFinite(ms) || ms < 0) return "00:00";
@@ -33,22 +97,7 @@ export const useMeter = () => {
     return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   }, []);
 
-  const setPlayersIfChanged = useCallback((newRows: Player[]) => {
-    setPlayers((prev) => {
-      const isSame =
-        prev.length === newRows.length &&
-        prev.every(
-          (p, i) =>
-            p.id === newRows[i].id &&
-            p.dps === newRows[i].dps &&
-            p.damageContribution === newRows[i].damageContribution &&
-            p.entireContribution === newRows[i].entireContribution,
-        );
-      return isSame ? prev : newRows;
-    });
-  }, []);
-
-  const fetchDps = () => {
+  const fetchDps = useCallback(() => {
     if (isCollapseRef.current) return;
     const raw = window.javaBridge?.getDpsData?.();
     // addLog(` ${raw}`);
@@ -59,13 +108,23 @@ export const useMeter = () => {
 
     lastJsonRef.current = raw;
 
-    const parsed = JSON.parse(raw);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
     const { players: rows, targetName, remainHp, maxHp } = parseCombatData(parsed);
+    const combatData = parsed as {
+      contributors?: unknown[];
+      battleStart?: number;
+      battleEnd?: number;
+    };
 
     if (resetPendingRef.current) {
-      const contributors = parsed.contributors ?? [];
+      const contributors = combatData.contributors ?? [];
       if (contributors.length > 0) {
-        if (parsed.battleStart > resetTimestampRef.current) {
+        if ((combatData.battleStart ?? 0) > resetTimestampRef.current) {
           resetPendingRef.current = false;
         } else {
           return;
@@ -76,17 +135,18 @@ export const useMeter = () => {
       }
     }
 
-    const battleStart = parsed.battleStart ?? null;
-    const battleEnd = parsed.battleEnd ?? null;
+    const battleStart = combatData.battleStart ?? null;
+    const battleEnd = combatData.battleEnd ?? null;
     const battleTime = battleStart && battleEnd ? battleEnd - battleStart : null;
+    let isInCombat = isInCombatRef.current;
 
     if (battleEnd !== lastBattleTimeRef.current) {
       lastBattleTimeRef.current = battleEnd;
-      setIsInCombat(true);
+      isInCombat = true;
 
       if (combatTimerRef.current) clearTimeout(combatTimerRef.current);
       combatTimerRef.current = setTimeout(() => {
-        setIsInCombat(false);
+        setSnapshotIfChanged({ isInCombat: false });
       }, 1000);
     }
 
@@ -98,28 +158,17 @@ export const useMeter = () => {
       } else {
         return;
       }
-    } else {
-      snapshotRef.current = rows;
     }
 
-    setMaxHp(maxHp);
-    setPlayersIfChanged(rowsToRender);
-    setTargetName(targetName);
-    setRemainHp(remainHp);
-    setBattleTime(battleTime);
-  };
-  const startPolling = () => {
-    if (pollTimerRef.current) return;
-
-    pollTimerRef.current = setInterval(fetchDps, POLL_MS);
-  };
-
-  const stopPolling = () => {
-    if (!pollTimerRef.current) return;
-
-    clearInterval(pollTimerRef.current);
-    pollTimerRef.current = null;
-  };
+    setSnapshotIfChanged({
+      players: rowsToRender,
+      targetName,
+      remainHp,
+      maxHp,
+      battleTime,
+      isInCombat,
+    });
+  }, [setSnapshotIfChanged]);
 
   // const reset = () => {
   //   resetPendingRef.current = true;
@@ -162,30 +211,42 @@ export const useMeter = () => {
     const sorted = [...rows].sort((a, b) => b.dps - a.dps);
 
     const battleTime = (report.battleEnd ?? 0) - (report.battleStart ?? 0);
-    setMaxHp(maxHp);
-
-    setPlayersIfChanged(sorted);
-    setTargetName(targetName);
-    setRemainHp(remainHp);
-    setBattleTime(battleTime);
-    setIsInCombat(false);
-  }, []);
+    setSnapshotIfChanged({
+      players: sorted,
+      targetName,
+      remainHp,
+      maxHp,
+      battleTime,
+      isInCombat: false,
+    });
+  }, [setSnapshotIfChanged]);
 
   useEffect(() => {
-    startPolling();
+    if (!pollTimerRef.current) {
+      pollTimerRef.current = setInterval(fetchDps, POLL_MS);
+    }
     fetchDps();
 
-    return () => stopPolling();
-  }, []);
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+      if (combatTimerRef.current) {
+        clearTimeout(combatTimerRef.current);
+        combatTimerRef.current = null;
+      }
+    };
+  }, [fetchDps]);
 
   return {
-    players,
-    targetName,
+    players: snapshot.players,
+    targetName: snapshot.targetName,
     // isCollapse,
-    battleTime,
-    isInCombat,
-    remainHp,
-    maxHp,
+    battleTime: snapshot.battleTime,
+    isInCombat: snapshot.isInCombat,
+    remainHp: snapshot.remainHp,
+    maxHp: snapshot.maxHp,
     formatBattleTime,
     // reset,
     // toggleCollapse,

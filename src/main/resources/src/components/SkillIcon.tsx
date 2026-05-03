@@ -7,8 +7,9 @@ interface Props {
 }
 
 export const SkillIcon = ({ code, size = 24 }: Props) => {
-  const [failed, setFailed] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | undefined>(undefined);
   const src = getSkillIconSrc(code);
+  const failed = src !== undefined && failedSrc === src;
 
   if (!src || failed) {
     return (
@@ -25,7 +26,7 @@ export const SkillIcon = ({ code, size = 24 }: Props) => {
       src={src}
       style={{ width: size, height: size }}
       className="shrink-0 rounded-md object-contain"
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
     />
   );
 };

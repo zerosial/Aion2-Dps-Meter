@@ -1,7 +1,8 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { getJobIconSrc } from "@/utils/icons";
 import { formatAmount } from "@/utils/format";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useShallow } from "zustand/react/shallow";
 
 interface Props {
   id: number;
@@ -38,18 +39,25 @@ export const MeterRow = memo(
     rowHeight,
     // power,
   }: Props) => {
-    const displayMode = useSettingsStore((s) => s.displayMode);
-    const nameDisplay = useSettingsStore((s) => s.nameDisplay);
-    const theme = useSettingsStore((s) => s.theme);
-    const contributionMode = useSettingsStore((s) => s.contributionMode);
+    const { displayMode, nameDisplay, theme, contributionMode } = useSettingsStore(
+      useShallow((s) => ({
+        displayMode: s.displayMode,
+        nameDisplay: s.nameDisplay,
+        theme: s.theme,
+        contributionMode: s.contributionMode,
+      })),
+    );
     // const showPower = useSettingsStore((s) => s.showPower);
 
-    const gradients = {
-      user: makeGradient(...theme.userBar),
-      normal: makeGradient(...theme.normalBar),
-      warning: makeGradient(...theme.warningBar),
-      error: makeGradient(...theme.errorBar),
-    };
+    const gradients = useMemo(
+      () => ({
+        user: makeGradient(...theme.userBar),
+        normal: makeGradient(...theme.normalBar),
+        warning: makeGradient(...theme.warningBar),
+        error: makeGradient(...theme.errorBar),
+      }),
+      [theme.errorBar, theme.normalBar, theme.userBar, theme.warningBar],
+    );
     const nameColor = !server
       ? theme.serverDefaultColor
       : server >= 1001 && server <= 1021
@@ -72,101 +80,59 @@ export const MeterRow = memo(
           ? gradients.warning
           : gradients.normal;
 
-    const renderStats = () => {
+    const statItems = useMemo(() => {
       const amountColor = theme.meterStatAmount;
       const dpsColor = theme.meterStatDps;
       const percentColor = theme.meterStatPercent;
       const pct = contributionMode === "entireContribution" ? entireContribution : contribution;
+      const compactAmount = formatAmount(amount);
+      const fullAmount = amount.toLocaleString();
+      const dpsText = `${dps.toLocaleString()}/초`;
+      const pctText = `${pct.toFixed(1)}%`;
+
       switch (displayMode) {
         case "amount_dps_percent":
-          return (
-            <>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: amountColor, fontSize }}>
-                {formatAmount(amount)}
-              </span>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: dpsColor, fontSize }}>
-                {dps.toLocaleString()}/초
-              </span>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: percentColor, fontSize }}>
-                {pct.toFixed(1)}%
-              </span>
-            </>
-          );
+          return [
+            { key: "amount", color: amountColor, value: compactAmount },
+            { key: "dps", color: dpsColor, value: dpsText },
+            { key: "percent", color: percentColor, value: pctText },
+          ];
         case "amount_percent":
-          return (
-            <>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: amountColor, fontSize }}>
-                {formatAmount(amount)}
-              </span>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: percentColor, fontSize }}>
-                {pct.toFixed(1)}%
-              </span>
-            </>
-          );
+          return [
+            { key: "amount", color: amountColor, value: compactAmount },
+            { key: "percent", color: percentColor, value: pctText },
+          ];
         case "amount_full_dps_percent":
-          return (
-            <>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: amountColor, fontSize }}>
-                {amount.toLocaleString()}
-              </span>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: dpsColor, fontSize }}>
-                {dps.toLocaleString()}/초
-              </span>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: percentColor, fontSize }}>
-                {pct.toFixed(1)}%
-              </span>
-            </>
-          );
+          return [
+            { key: "amount", color: amountColor, value: fullAmount },
+            { key: "dps", color: dpsColor, value: dpsText },
+            { key: "percent", color: percentColor, value: pctText },
+          ];
         case "amount_full_percent":
-          return (
-            <>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: amountColor, fontSize }}>
-                {amount.toLocaleString()}
-              </span>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: percentColor, fontSize }}>
-                {pct.toFixed(1)}%
-              </span>
-            </>
-          );
+          return [
+            { key: "amount", color: amountColor, value: fullAmount },
+            { key: "percent", color: percentColor, value: pctText },
+          ];
         case "dps_percent":
         default:
-          return (
-            <>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: dpsColor, fontSize }}>
-                {dps.toLocaleString()}/초
-              </span>
-              <span
-                className="text-end whitespace-nowrap "
-                style={{ color: percentColor, fontSize }}>
-                {pct.toFixed(1)}%
-              </span>
-            </>
-          );
+          return [
+            { key: "dps", color: dpsColor, value: dpsText },
+            { key: "percent", color: percentColor, value: pctText },
+          ];
       }
-    };
-    const displayName = (() => {
+    }, [
+      amount,
+      contribution,
+      contributionMode,
+      displayMode,
+      dps,
+      entireContribution,
+      theme.meterStatAmount,
+      theme.meterStatDps,
+      theme.meterStatPercent,
+    ]);
+
+    const displayName = useMemo(() => {
       switch (nameDisplay) {
         case "all":
           return name;
@@ -175,13 +141,13 @@ export const MeterRow = memo(
         case "hidden":
           return maskedName(name);
       }
-    })();
+    }, [isUser, name, nameDisplay]);
 
     return (
       <div
         onClick={() => onSelect(id)}
         style={{ height: rowHeight }}
-        className={`w-full relative px-2 rounded-sm overflow-hidden bg-black/30 cursor-pointer`}>
+        className={`w-full  relative px-2 rounded-sm overflow-hidden bg-black/30 cursor-pointer`}>
         <div
           className="absolute inset-0 origin-left transition-transform duration-150 ease-out"
           style={{
@@ -189,10 +155,10 @@ export const MeterRow = memo(
             transform: `scaleX(${ratio})`,
           }}
         />
-        <div className="relative h-full flex items-center gap-3">
+        <div className="relative h-full flex items-center gap-3  overflow-hidden">
           <div
             style={{ width: iconSize, height: iconSize }}
-            className="flex items-center justify-center shrink-0">
+            className="flex items-center justify-center ">
             {iconSrc && (
               <img
                 src={iconSrc}
@@ -202,13 +168,13 @@ export const MeterRow = memo(
               />
             )}
           </div>
-          <div className="flex gap-1.5 flex-1 items-center">
-            <span
-              className="font-bold text-shadow-meter truncate pr-1"
-              style={{ color: nameColor, fontSize }}>
-              {displayName}
-            </span>
-            {/* {showPower && power > 0 && (
+          <span
+            className="font-bold text-shadow-meter truncate flex-1 "
+            style={{ color: nameColor, fontSize }}>
+            {displayName}
+          </span>
+          {/* <div className="flex gap-1.5 flex-1 items-center "> */}
+          {/* {showPower && power > 0 && (
               <div
                 className={`bg-black/30 px-2     text-shadow-meter flex items-center rounded-xl `}>
                 <span
@@ -218,8 +184,17 @@ export const MeterRow = memo(
                   }}>{`${(power / 1000).toFixed(1)}k`}</span>
               </div>
             )} */}
+          {/* </div> */}
+          <div className="flex items-center gap-2 font-bold text-shadow-meter shrink-0">
+            {statItems.map((item) => (
+              <span
+                key={item.key}
+                className="text-end whitespace-nowrap "
+                style={{ color: item.color, fontSize }}>
+                {item.value}
+              </span>
+            ))}
           </div>
-          <div className="flex items-center gap-2 font-bold text-shadow-meter">{renderStats()}</div>
         </div>
       </div>
     );
@@ -227,8 +202,11 @@ export const MeterRow = memo(
   (prev, next) => {
     return (
       prev.dps === next.dps &&
+      prev.amount === next.amount &&
       prev.contribution === next.contribution &&
       prev.entireContribution === next.entireContribution &&
+      prev.server === next.server &&
+      prev.isUser === next.isUser &&
       prev.isSelected === next.isSelected &&
       prev.topDps === next.topDps &&
       prev.name === next.name &&

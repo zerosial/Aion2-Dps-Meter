@@ -24,7 +24,7 @@ const getDefaultSidePanelX = (fallbackWidth: number) => {
   const meterRoot = document.querySelector("[data-meter-root-anchor]");
   if (!meterRoot) return fallbackWidth + DEFAULT_SIDE_PANEL_GAP;
 
-  return meterRoot.getBoundingClientRect().right;
+  return meterRoot.getBoundingClientRect().right + 8;
 };
 
 const clampPanelPosition = (x: number, y: number, width: number, height: number) => {
@@ -124,20 +124,26 @@ const SidePanelComponent = ({
   };
 
   useEffect(() => {
+    let showTimer: ReturnType<typeof setTimeout> | null = null;
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
     if (type) {
       setCurrentType(type);
       setCurrentPlayer(player);
       if (!rendered) {
         setRendered(true);
-        setTimeout(() => setVisible(true), 10);
+        showTimer = setTimeout(() => setVisible(true), 10);
       }
     } else {
       setVisible(false);
-      setTimeout(() => {
+      hideTimer = setTimeout(() => {
         setRendered(false);
         setCurrentType(null);
       }, 200);
     }
+    return () => {
+      if (showTimer) clearTimeout(showTimer);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
   }, [type, player]);
   if (!rendered) return null;
 
@@ -170,7 +176,7 @@ const SidePanelComponent = ({
     <div
       ref={panelRef}
       style={positionStyle}
-      className={cn(rootClass, "fixed left-0 top-0 flex flex-col overflow-hidden ")}
+      className={cn(rootClass, "fixed left-0 top-0  flex flex-col overflow-hidden ")}
       onMouseDown={(e) => e.stopPropagation()}>
       <div className="flex items-center shrink-0 pl-5 px-3 py-1.5 border-b border-white/10 gap-2">
         <div

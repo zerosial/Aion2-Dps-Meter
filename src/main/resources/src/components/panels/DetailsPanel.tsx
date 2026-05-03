@@ -13,6 +13,7 @@ import {
 import { SkillIcon } from "../SkillIcon";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useShallow } from "zustand/react/shallow";
 
 interface Props {
   player: Player | null;
@@ -31,19 +32,29 @@ export const DetailsPanel = ({
 }: Props) => {
   const { getDetails } = useDetails();
   const [details, setDetails] = useState<Details | null>(null);
-  const detailWidth = useSettingsStore((s) => s.detailWidth);
+  const { detailWidth, contributionMode } = useSettingsStore(
+    useShallow((s) => ({
+      detailWidth: s.detailWidth,
+      contributionMode: s.contributionMode,
+    })),
+  );
   const buffColumns = detailWidth >= 1200 ? 4 : detailWidth >= 900 ? 3 : detailWidth >= 700 ? 2 : 1;
   const isCompact = detailWidth < 700;
   const [openPanel, setOpenPanel] = useState<string>("skills");
-  const contributionMode = useSettingsStore((s) => s.contributionMode);
 
   const playerNameMap = useMemo(() => new Map(players.map((p) => [p.id, p.name])), [players]);
 
   useEffect(() => {
     if (!player) return;
+    let ignore = false;
     setDetails(null);
-    getDetails(player, combatTime, historyIdx).then(setDetails);
-  }, [player]);
+    getDetails(player, combatTime, historyIdx).then((next) => {
+      if (!ignore) setDetails(next);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [combatTime, historyIdx, player]);
 
   if (!player || !details) return null;
 
