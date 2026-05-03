@@ -24,7 +24,7 @@ const getDefaultSidePanelX = (fallbackWidth: number) => {
   const meterRoot = document.querySelector("[data-meter-root-anchor]");
   if (!meterRoot) return fallbackWidth + DEFAULT_SIDE_PANEL_GAP;
 
-  return meterRoot.getBoundingClientRect().right + 8;
+  return meterRoot.getBoundingClientRect().right - 32;
 };
 
 const clampPanelPosition = (x: number, y: number, width: number, height: number) => {

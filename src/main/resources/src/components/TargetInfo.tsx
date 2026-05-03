@@ -25,21 +25,7 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
   const fontSize = `${Math.max(10, Math.round(rowHeight * 0.4))}px`;
   const percent = maxHp > 0 ? `${((remainHp / maxHp) * 100).toFixed(1)}%` : "-";
 
-  const renderHpValue = (value: string) => (
-    <span
-      className=" text-end whitespace-nowrap"
-      style={{ color: theme.bossRightValue, fontSize }}>
-      {value}
-    </span>
-  );
-
-  const renderDivider = () => (
-    <span
-      className="mx-0"
-      style={{ color: theme.bossRightValue, fontSize }}>
-      /
-    </span>
-  );
+  const renderHpValue = (value: string) => <span>{value}</span>;
 
   const renderStats = () => {
     switch (targetInfoDisplayMode) {
@@ -47,8 +33,8 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
         return (
           <>
             <span>{renderHpValue(formatAmount(remainHp))}</span>
-            <span className="mx-0.5">{renderDivider()}</span>
-            <span>{renderHpValue(formatAmount(maxHp))}</span>
+            {/* <span className="mx-0.5">{renderDivider()}</span> */}
+            <span className="ml-0.5 opacity-70 ">({formatAmount(maxHp)})</span>{" "}
             <span className="ml-2">{renderHpValue(percent)}</span>
           </>
         );
@@ -73,8 +59,8 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
         return (
           <>
             <span>{renderHpValue(remainHp.toLocaleString())}</span>
-            <span className="mx-0.5">{renderDivider()}</span>
-            <span>{renderHpValue(maxHp.toLocaleString())}</span>
+            {/* <span className="mx-0.5">{renderDivider()}</span> */}
+            <span className="ml-0.5 opacity-70 ">({maxHp.toLocaleString()})</span>
             <span className="ml-2">{renderHpValue(percent)}</span>
           </>
         );
@@ -109,7 +95,9 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
         </span>
 
         {!isFailed && (
-          <div className="ml-auto font-bold text-shadow-meter shrink-0 flex items-center ">
+          <div
+            className="ml-auto font-bold text-shadow-meter shrink-0 flex items-center text-end whitespace-nowrap"
+            style={{ color: theme.bossRightValue, fontSize }}>
             {renderStats()}
           </div>
         )}

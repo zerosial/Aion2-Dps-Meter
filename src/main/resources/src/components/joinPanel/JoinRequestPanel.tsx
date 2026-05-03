@@ -157,7 +157,7 @@ export const JoinRequestPanel = memo(() => {
 
   useEffect(() => {
     if (!rendered || requests.length === 0) return;
-    const timer = setInterval(() => setNow(Date.now()), 200);
+    const timer = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(timer);
   }, [rendered, requests.length]);
 
