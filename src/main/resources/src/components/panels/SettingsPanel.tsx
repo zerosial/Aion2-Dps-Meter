@@ -193,7 +193,7 @@ export const SettingsPanel = ({
   };
 
   return (
-    <div className="font-bold relative rounded-lg py-3 px-7 w-100">
+    <div className="font-bold  rounded-lg py-3 px-7">
       <div className="flex items-center pb-3 border-b border-white/10">
         <span>설정</span>
         <Button
@@ -204,7 +204,7 @@ export const SettingsPanel = ({
         </Button>
       </div>
 
-      <div className="max-h-170 py-2 -mr-4 pr-4 overflow-y-auto">
+      <div className=" py-2 ">
         <SettingsItem>
           <SettingsRow
             title="버전 정보"

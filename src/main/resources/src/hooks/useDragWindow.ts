@@ -18,7 +18,7 @@ export const useDragWindow = (selector: string) => {
     const handleMouseDown = (e: globalThis.MouseEvent) => {
       const target = e.target as HTMLElement;
       const ignoreTarget = target.closest(
-        "input, button, .settingsPanel, .detailsPanel, .console, .resizeHandle",
+        "input, button, .settingsPanel, .detailsPanel, .console, .resizeHandle, .drag-handle",
       );
       if (ignoreTarget) return;
 

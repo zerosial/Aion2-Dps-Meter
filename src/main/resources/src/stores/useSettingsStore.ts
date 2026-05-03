@@ -110,6 +110,12 @@ interface SettingsState {
   setJoinPanelWidth: (w: number) => void;
   joinPanelHeight: number;
   setJoinPanelHeight: (h: number) => void;
+  joinPanelX: number;
+  joinPanelY: number;
+  setJoinPanelPosition: (x: number, y: number) => void;
+  sidePanelX: number;
+  sidePanelY: number;
+  setSidePanelPosition: (x: number, y: number) => void;
 }
 
 const jb = () => (window as any).javaBridge;
@@ -144,6 +150,10 @@ const defaultSettings = {
   isAutoHide: true,
   joinPanelWidth: 400,
   joinPanelHeight: 480,
+  joinPanelX: 0,
+  joinPanelY: 0,
+  sidePanelX: 0,
+  sidePanelY: 0,
 };
 
 export const useSettingsStore = create<SettingsState>((set) => {
@@ -203,6 +213,10 @@ export const useSettingsStore = create<SettingsState>((set) => {
       isAutoHide: j.isAutoHide?.() ?? false,
       joinPanelWidth: Number(j.loadProps?.("joinPanelWidth")) || defaultSettings.joinPanelWidth,
       joinPanelHeight: Number(j.loadProps?.("joinPanelHeight")) || defaultSettings.joinPanelHeight,
+      joinPanelX: Number(j.loadProps?.("joinPanelX")) || defaultSettings.joinPanelX,
+      joinPanelY: Number(j.loadProps?.("joinPanelY")) || defaultSettings.joinPanelY,
+      sidePanelX: Number(j.loadProps?.("sidePanelX")) || defaultSettings.sidePanelX,
+      sidePanelY: Number(j.loadProps?.("sidePanelY")) || defaultSettings.sidePanelY,
 
       isLoaded: true,
     });
@@ -241,6 +255,11 @@ export const useSettingsStore = create<SettingsState>((set) => {
 
     joinPanelWidth: defaultSettings.joinPanelWidth,
     joinPanelHeight: defaultSettings.joinPanelHeight,
+    joinPanelX: defaultSettings.joinPanelX,
+    joinPanelY: defaultSettings.joinPanelY,
+    sidePanelX: defaultSettings.sidePanelX,
+    sidePanelY: defaultSettings.sidePanelY,
+
     // setHotkey: (hotkey) => {
     //   set({ hotkey });
     //   jb()?.updateHotkey?.(hotkey.modifiers, hotkey.vkCode);
@@ -358,6 +377,16 @@ export const useSettingsStore = create<SettingsState>((set) => {
     setJoinPanelHeight: (joinPanelHeight) => {
       set({ joinPanelHeight });
       jb()?.saveProps?.("joinPanelHeight", String(joinPanelHeight));
+    },
+    setJoinPanelPosition: (joinPanelX, joinPanelY) => {
+      set({ joinPanelX, joinPanelY });
+      jb()?.saveProps?.("joinPanelX", String(joinPanelX));
+      jb()?.saveProps?.("joinPanelY", String(joinPanelY));
+    },
+    setSidePanelPosition: (sidePanelX, sidePanelY) => {
+      set({ sidePanelX, sidePanelY });
+      jb()?.saveProps?.("sidePanelX", String(sidePanelX));
+      jb()?.saveProps?.("sidePanelY", String(sidePanelY));
     },
   };
 });

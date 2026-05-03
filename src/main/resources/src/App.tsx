@@ -261,10 +261,10 @@ export default function App() {
         )}
       </div>
 
-      <div className="group/join">
-        <JoinRequestPanel isMinimal={isMinimal} />
-      </div>
       <DebugConsole></DebugConsole>
+      <div>
+        <JoinRequestPanel />
+      </div>
       <div>
         <SidePanel
           type={activePanel}

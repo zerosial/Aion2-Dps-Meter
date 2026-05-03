@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  // useState
-} from "react";
+
 import {
   X,
   //  Upload, Loader2, TriangleAlert, House
@@ -13,7 +10,6 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 
 interface Props {
   onClose: () => void;
-  onReady?: () => void;
   formatBattleTime: (ms: number) => string;
   onSelectHistory: (idx: number, report: any) => void;
 }
@@ -27,19 +23,13 @@ const formatDateTime = (ms: number) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
-export const HistoryPanel = ({ onClose, onReady, formatBattleTime, onSelectHistory }: Props) => {
-  const { historyList, loading, fetchHistory } = useHistory();
+export const HistoryPanel = ({ onClose, formatBattleTime, onSelectHistory }: Props) => {
+  const { historyList, loading } = useHistory();
   const theme = useSettingsStore((s) => s.theme);
   // const [uploadStatus, setUploadStatus] = useState<Record<number, UploadStatus>>({});
   // const [uploadSlugs, setUploadSlugs] = useState<Record<number, string>>({});
 
   // const isAnyUploading = Object.values(uploadStatus).some((s) => s === "loading");
-
-  useEffect(() => {
-    fetchHistory().then(() => {
-      onReady?.();
-    });
-  }, []);
 
   // const handleUpload = async (e: React.MouseEvent, idx: number) => {
   //   e.stopPropagation();
@@ -60,7 +50,7 @@ export const HistoryPanel = ({ onClose, onReady, formatBattleTime, onSelectHisto
   // };
 
   return (
-    <div className="relative text-white font-bold rounded-lg p-4 w-90">
+    <div className=" text-white font-bold rounded-lg p-4 ">
       <div className="flex items-center pb-3 border-b border-white/10">
         <span>전투 기록</span>
         <Button
@@ -71,9 +61,7 @@ export const HistoryPanel = ({ onClose, onReady, formatBattleTime, onSelectHisto
         </Button>
       </div>
 
-      <div
-        className="pt-3 pr-2 flex flex-col gap-2 overflow-y-auto flex-1"
-        style={{ maxHeight: "70vh" }}>
+      <div className="pt-3 pr-2 flex flex-col gap-2 min-h-0">
         {loading && <div className="text-center opacity-40 py-8">불러오는 중</div>}
         {!loading && historyList.length === 0 && (
           <div className="text-center opacity-40 py-8">전투 기록이 없습니다</div>

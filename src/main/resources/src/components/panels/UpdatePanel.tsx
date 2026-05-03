@@ -69,14 +69,11 @@ export const UpdatePanel = ({
   onUpdate,
   onOpenReleasePage,
   onRetryDownload,
-  onReady,
 }: Props) => {
   const [visible, setVisible] = useState(true);
   const prevStatus = useRef(downloadState.status);
 
-  useEffect(() => {
-    onReady?.();
-  }, []);
+
 
   useEffect(() => {
     if (prevStatus.current === downloadState.status) return;

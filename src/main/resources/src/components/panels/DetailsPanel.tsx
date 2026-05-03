@@ -31,7 +31,6 @@ export const DetailsPanel = ({
   player,
   onClose,
   players,
-  onReady,
   combatTime,
   historyIdx,
 }: Props) => {
@@ -54,13 +53,6 @@ export const DetailsPanel = ({
   }, [player]);
 
   useLayoutEffect(() => {
-    if (details) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          onReady?.();
-        });
-      });
-    }
     if (scrollRef.current) {
       setHasScroll(scrollRef.current.scrollHeight > scrollRef.current.clientHeight);
     }
@@ -76,7 +68,7 @@ export const DetailsPanel = ({
   return (
     <div
       style={{ width: detailWidth }}
-      className=" relative text-white font-bold rounded-lg py-4 px-7">
+      className="  text-white font-bold rounded-lg py-4 px-7">
       <div className="flex items-center pb-3 border-b border-white/10">
         <span>{player.name} 상세내역</span>
         <Button
