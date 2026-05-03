@@ -16,6 +16,7 @@ data class AnalyzedSkill(
     var doubleTimes: Int = 0,
     var parryTimes: Int = 0,
     var shardTimes: Int = 0,
+    var multiHitTimes: Int = 0,
     var name: String? = null
 ) {
     constructor(pdp: ParsedDamagePacket) : this(

@@ -96,7 +96,9 @@ class DpsCalculator(private val streamResetCallback: (() -> Unit)? = null) {
                 }
                 cachedInfo.getOrPut(user.id) { DpsInformation() }.addDamage(packet.getDamage().toDouble())
                 val ts = packet.getTimeStamp()
-                if (cachedBattleStart == 0L) { cachedBattleStart = ts; isCachedBattleStartFake = true }
+                if (cachedBattleStart == 0L) {
+                    cachedBattleStart = ts; isCachedBattleStartFake = true
+                }
                 if (isCachedBattleStartFake && cachedBattleStart > ts) cachedBattleStart = ts
                 if (ts > cachedBattleEnd) cachedBattleEnd = ts
             }
@@ -177,6 +179,7 @@ class DpsCalculator(private val streamResetCallback: (() -> Unit)? = null) {
                     if (it.getSpecials().contains(SpecialDamage.DOUBLE)) analyzedSkill.doubleTimes++
                     if (it.getSpecials().contains(SpecialDamage.PERFECT)) analyzedSkill.perfectTimes++
                     if (it.getSpecials().contains(SpecialDamage.POWER_SHARD)) analyzedSkill.shardTimes++
+                    if (it.getLoop() != 0) analyzedSkill.multiHitTimes++
                 }
             }
         }
