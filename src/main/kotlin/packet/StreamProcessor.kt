@@ -576,21 +576,10 @@ class StreamProcessor() {
         offset += damageInfo.length
         if (offset >= packet.size) return false
 
-        val loopInfo = readVarInt(packet, offset)
-        if (loopInfo.length < 0) return false
-        pdp.setLoop(loopInfo)
-        offset += loopInfo.length
-
-//        if (loopInfo.value != 0 && offset >= packet.size) return false
-//
-//        if (loopInfo.value != 0) {
-//            for (i in 0 until loopInfo.length) {
-//                var skipValueInfo = readVarInt(packet, offset)
-//                if (skipValueInfo.length < 0) return false
-//                pdp.addSkipData(skipValueInfo)
-//                offset += skipValueInfo.length
-//            }
-//        }
+        val multiHitInfo = tryParseMultiHit(packet, offset)
+        val multiHitCount = multiHitInfo.time
+        pdp.setLoop(multiHitCount)
+        offset = multiHitInfo.newOffset + 2
 
         if (pdp.getActorId() != pdp.getTargetId()) {
             //추후 hps 를 넣는다면 수정하기
@@ -608,6 +597,40 @@ class StreamProcessor() {
         }
         return true
 
+    }
+
+    private data class MultiHitOutput(val time: Int, val damage: Int, val newOffset: Int)
+
+    private fun tryParseMultiHit(data: ByteArray, offset: Int): MultiHitOutput {
+        var currentOffset = offset
+        val count = data[currentOffset].toInt() and 0xFF
+        currentOffset++
+
+        if (count == 0) {
+            return MultiHitOutput(0, 0, offset)
+        }
+
+        if (currentOffset >= data.size) return MultiHitOutput(0, 0, offset)
+        val damageInfo = readVarInt(data, currentOffset)
+        if (damageInfo.value == -1) return MultiHitOutput(0, 0, offset)
+        currentOffset += damageInfo.length
+
+        if (damageInfo.value == 0) {
+            return MultiHitOutput(0, 0, offset)
+        }
+
+        // 나머지 (count-1)개가 동일한 값인지 검증
+        repeat(count - 1) {
+            if (currentOffset >= data.size) return MultiHitOutput(0, 0, offset)
+            val nextDamage = readVarInt(data, currentOffset)
+            if (nextDamage.value == -1) return MultiHitOutput(0, 0, offset)
+            currentOffset += nextDamage.length
+            if (nextDamage.value != damageInfo.value) {
+                return MultiHitOutput(0, 0, offset)
+            }
+        }
+
+        return MultiHitOutput(count, damageInfo.value, currentOffset)
     }
 
     fun toHex(bytes: ByteArray): String {

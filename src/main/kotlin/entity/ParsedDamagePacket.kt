@@ -44,8 +44,8 @@ class ParsedDamagePacket {
         fun setSwitchVariable(switchVariableInfo: StreamProcessor.VarIntOutput){
                 this.switchVariable = switchVariableInfo.value
         }
-        fun setLoop(loopInfo: StreamProcessor.VarIntOutput){
-                this.loop = loopInfo.value
+        fun setLoop(multiHitCount:Int){
+                this.loop = multiHitCount
         }
         fun addSkipData(skipValueInfo: StreamProcessor.VarIntOutput){
                 this.skipValues.add(skipValueInfo.value)
