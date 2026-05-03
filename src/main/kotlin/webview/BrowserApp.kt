@@ -302,7 +302,7 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
 
         HotkeyHandler.registerCallback {
             Platform.runLater {
-                bridge.hardResetDps()
+                // bridge.hardResetDps()
             }
         }
         HotkeyHandler.registerVisibilityCallback {
