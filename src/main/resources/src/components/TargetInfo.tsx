@@ -23,7 +23,7 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
 
   const iconSize = Math.round(rowHeight * 0.7);
   const fontSize = `${Math.max(10, Math.round(rowHeight * 0.4))}px`;
-  const percent = maxHp > 0 ? `${((remainHp / maxHp) * 100).toFixed(1)}%` : "-";
+  const percent = maxHp > 0 ? `${((remainHp / maxHp) * 100).toFixed(1)}%` : "0%";
 
   const renderHpValue = (value: string) => <span>{value}</span>;
 
@@ -60,7 +60,7 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
           <>
             <span>{renderHpValue(remainHp.toLocaleString())}</span>
             {/* <span className="mx-0.5">{renderDivider()}</span> */}
-            <span className="ml-0.5 opacity-70 ">({maxHp.toLocaleString()})</span>
+            <span className="ml-0.5  ">({maxHp.toLocaleString()})</span>
             <span className="ml-2">{renderHpValue(percent)}</span>
           </>
         );

@@ -13,6 +13,8 @@ interface UseDraggablePanelOptions {
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+const DRAG_THRESHOLD = 5;
+
 const isInteractiveTarget = (target: Element): boolean => {
   if (
     target.closest(
@@ -50,7 +52,6 @@ export const useDraggablePanel = ({
 
       const panel = panelRef.current;
       if (!panel) return;
-      panel.style.willChange = "left, top";
 
       const rect = panel.getBoundingClientRect();
       const startMouseX = e.clientX;
@@ -66,13 +67,21 @@ export const useDraggablePanel = ({
         ? Math.max(minY, window.innerHeight - constraintHeight)
         : Infinity;
 
-      posRef.current = { x: clamp(startPanelX, minX, maxX), y: clamp(startPanelY, minY, maxY) };
+      let isDragging = false;
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
+        const deltaX = moveEvent.clientX - startMouseX;
+        const deltaY = moveEvent.clientY - startMouseY;
+
+        if (!isDragging) {
+          if (Math.abs(deltaX) <= DRAG_THRESHOLD && Math.abs(deltaY) <= DRAG_THRESHOLD) return;
+          isDragging = true;
+          posRef.current = { x: clamp(startPanelX, minX, maxX), y: clamp(startPanelY, minY, maxY) };
+          panel.style.willChange = "left, top";
+        }
+
         if (rafId.current !== null) cancelAnimationFrame(rafId.current);
         rafId.current = requestAnimationFrame(() => {
-          const deltaX = moveEvent.clientX - startMouseX;
-          const deltaY = moveEvent.clientY - startMouseY;
           const nextX = clamp(startPanelX + deltaX, minX, maxX);
           const nextY = clamp(startPanelY + deltaY, minY, maxY);
           posRef.current = { x: nextX, y: nextY };
@@ -89,9 +98,12 @@ export const useDraggablePanel = ({
           cancelAnimationFrame(rafId.current);
           rafId.current = null;
         }
-        panel.style.willChange = "auto";
 
-        onPositionChange(posRef.current.x, posRef.current.y);
+        if (isDragging) {
+          panel.style.willChange = "auto";
+          onPositionChange(posRef.current.x, posRef.current.y);
+        }
+
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
       };

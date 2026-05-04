@@ -33,7 +33,6 @@ export const useDragUi = () => {
         )
       )
         return;
-      rootEl.style.willChange = "left, top";
 
       const rect = rootEl.getBoundingClientRect();
       isDragging = true;
@@ -50,9 +49,9 @@ export const useDragUi = () => {
 
       const deltaX = e.clientX - startMouseX;
       const deltaY = e.clientY - startMouseY;
-
-      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+      if (!wasDraggingRef.current && (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3)) {
         wasDraggingRef.current = true;
+        rootEl.style.willChange = "left, top";
       }
 
       if (rafId.current !== null) cancelAnimationFrame(rafId.current);
@@ -72,13 +71,13 @@ export const useDragUi = () => {
     const handleMouseUp = () => {
       if (isDragging && wasDraggingRef.current) {
         setUiPosition(currentX, currentY);
+        rootEl.style.willChange = "auto";
       }
       if (rafId.current !== null) {
         cancelAnimationFrame(rafId.current);
         rafId.current = null;
       }
       isDragging = false;
-      rootEl.style.willChange = "auto";
 
       setTimeout(() => {
         wasDraggingRef.current = false;

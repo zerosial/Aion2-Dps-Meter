@@ -265,7 +265,8 @@ export const SettingsPanel = ({
       className="flex pr-3 min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden py-2"
       style={{
         contain: "layout style paint",
-      }}>
+      }}
+      >
       <div className="flex pr-3 min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar-gutter:stable py-2">
         <SettingsItem>
           <SettingsRow

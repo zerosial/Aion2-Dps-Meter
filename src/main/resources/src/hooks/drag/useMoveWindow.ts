@@ -45,15 +45,16 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
       const newY = initialStageY + deltaY;
 
       (window as any).javaBridge.moveWindow(newX, newY);
-      (window as any).javaBridge.onDragMove(newX, newY); 
+      (window as any).javaBridge.onDragMove(newX, newY);
     };
 
     const handleMouseUp = () => {
-      if (isDragging && wasDraggingRef.current) {
-        setWindowPosition(window.screenX, window.screenY);
+      if (isDragging) {
+        if (wasDraggingRef.current) {
+          setWindowPosition(window.screenX, window.screenY);
+        }
+        (window as any).javaBridge?.onDragEnd();
       }
-      (window as any).javaBridge?.onDragEnd();
-
       isDragging = false;
       setTimeout(() => {
         wasDraggingRef.current = false;
@@ -69,7 +70,7 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [setWindowPosition]);
+  }, [target, setWindowPosition]);
 
   return { wasDraggingRef };
 };
