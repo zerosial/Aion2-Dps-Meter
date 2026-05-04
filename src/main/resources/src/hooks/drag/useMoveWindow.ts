@@ -45,7 +45,7 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
       const newY = initialStageY + deltaY;
 
       (window as any).javaBridge.moveWindow(newX, newY);
-      (window as any).javaBridge.onDragMove(newX, newY); // ghost 동기화
+      (window as any).javaBridge.onDragMove(newX, newY); 
     };
 
     const handleMouseUp = () => {

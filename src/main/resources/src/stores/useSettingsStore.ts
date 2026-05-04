@@ -500,13 +500,18 @@ export const useSettingsStore = create<SettingsState>((set) => {
       jb()?.saveProps?.("joinPanelY", String(joinPanelY));
     },
     resetJoinPanelPosition: () => {
+      const meterRoot = document.querySelector("[data-meter-root-anchor]");
+      const rect = meterRoot?.getBoundingClientRect();
+      const x = rect ? rect.left : 0;
+      const y = rect ? rect.bottom + 8 : 8;
+
       set({
-        joinPanelX: defaultSettings.joinPanelX,
-        joinPanelY: defaultSettings.joinPanelY,
-        joinPanelPositioned: false,
+        joinPanelX: x,
+        joinPanelY: y,
+        joinPanelPositioned: true, 
       });
-      jb()?.saveProps?.("joinPanelX", "");
-      jb()?.saveProps?.("joinPanelY", "");
+      jb()?.saveProps?.("joinPanelX", String(x));
+      jb()?.saveProps?.("joinPanelY", String(y));
     },
     setSidePanelPosition: (sidePanelX, sidePanelY) => {
       set({ sidePanelX, sidePanelY, sidePanelPositioned: true });
@@ -514,13 +519,18 @@ export const useSettingsStore = create<SettingsState>((set) => {
       jb()?.saveProps?.("sidePanelY", String(sidePanelY));
     },
     resetSidePanelPosition: () => {
+      const meterRoot = document.querySelector("[data-meter-root-anchor]");
+      const rect = meterRoot?.getBoundingClientRect();
+      const x = rect ? rect.right + 8 : 408;
+      const y = rect ? rect.top : 8;
+
       set({
-        sidePanelX: defaultSettings.sidePanelX,
-        sidePanelY: defaultSettings.sidePanelY,
-        sidePanelPositioned: false,
+        sidePanelX: x,
+        sidePanelY: y,
+        sidePanelPositioned: true,
       });
-      jb()?.saveProps?.("sidePanelX", "");
-      jb()?.saveProps?.("sidePanelY", "");
+      jb()?.saveProps?.("sidePanelX", String(x));
+      jb()?.saveProps?.("sidePanelY", String(y));
     },
     resetMeterPosition: () => {
       set({
