@@ -1,6 +1,6 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
-import { Grip, Settings, CircleX } from "lucide-react";
+import { Settings, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getServerLabel } from "@/utils/parser";
 import { getJobIconSrc } from "@/utils/icons";
@@ -132,7 +132,7 @@ export const JoinRequestPanel = memo(() => {
     JOIN_PANEL_HEADER_HEIGHT,
   );
 
-  const { panelRef, onMouseDownHandle } = useDraggablePanel({
+  const { panelRef, onMouseDownPanel } = useDraggablePanel({
     initialX: panelX,
     initialY: panelY,
     onPositionChange: setJoinPanelPosition,
@@ -187,17 +187,11 @@ export const JoinRequestPanel = memo(() => {
       ref={panelRef}
       style={positionStyle}
       className={cn(rootClass, "fixed flex flex-col")}
-      onMouseDown={(e) => e.stopPropagation()}>
+      onMouseDown={onMouseDownPanel}>
       <div>
         <div
           className={`${headerClass} flex items-center justify-between px-3 py-1.5 border-b border-white/10 rounded-t-lg`}>
           <div className="flex items-center h-8">
-            <div
-              className="drag-handle mr-1 cursor-grab active:cursor-grabbing opacity-50 hover:opacity-100 transition-opacity shrink-0"
-              onMouseDown={onMouseDownHandle}
-              title="드래그하여 이동">
-              <Grip className="size-4 rotate-90" />
-            </div>
             <span className={`mr-2 pl-2 flex-1 text-sm`}>파티 신청</span>
             <span className={`text-sm text-center`}>{requests.length}건</span>
           </div>

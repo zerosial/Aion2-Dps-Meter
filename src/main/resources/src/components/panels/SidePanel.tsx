@@ -7,7 +7,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { HistoryPanel } from "./HistoryPanel";
 import { useDraggablePanel } from "@/hooks/drag/useDraggablePanel";
 import { useSidePanelResize } from "@/hooks/resize/useSidePanelResize";
-import { CircleX, Grip } from "lucide-react";
+import { CircleX } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button";
 import { ResizeHandle } from "../ResizeHandle.tsx";
@@ -96,7 +96,7 @@ const SidePanelComponent = ({
   const defaultSidePanelX = getDefaultSidePanelX(meterWidth);
   const defaultSidePanelY = DEFAULT_SIDE_PANEL_Y;
 
-  const { panelRef, onMouseDownHandle } = useDraggablePanel({
+  const { panelRef, onMouseDownPanel } = useDraggablePanel({
     initialX: sidePanelPositioned ? sidePanelX : defaultSidePanelX,
     initialY: sidePanelPositioned ? sidePanelY : defaultSidePanelY,
     onPositionChange: setSidePanelPosition,
@@ -177,14 +177,8 @@ const SidePanelComponent = ({
       ref={panelRef}
       style={positionStyle}
       className={cn(rootClass, "fixed left-0 top-0  flex flex-col overflow-hidden ")}
-      onMouseDown={(e) => e.stopPropagation()}>
+      onMouseDown={onMouseDownPanel}>
       <div className="flex items-center shrink-0 pl-5 px-3 py-1.5 border-b border-white/10 gap-2">
-        <div
-          className="drag-handle mr-1 cursor-grab active:cursor-grabbing opacity-70 hover:opacity-70 transition-opacity shrink-0"
-          onMouseDown={onMouseDownHandle}
-          title="드래그하여 이동">
-          <Grip className="size-4 rotate-90" />
-        </div>
         {currentType === "update" ? (
           <>
             <div

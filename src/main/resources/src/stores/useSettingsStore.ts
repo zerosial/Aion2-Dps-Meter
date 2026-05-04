@@ -144,6 +144,7 @@ interface SettingsState {
   setUpdatePanelHeight: (h: number) => void;
   uiX: number;
   uiY: number;
+  resetMeterPosition: () => void;
   setUiPosition: (x: number, y: number) => void;
 }
 
@@ -520,6 +521,15 @@ export const useSettingsStore = create<SettingsState>((set) => {
       });
       jb()?.saveProps?.("sidePanelX", "");
       jb()?.saveProps?.("sidePanelY", "");
+    },
+    resetMeterPosition: () => {
+      set({
+        uiX: defaultSettings.uiX,
+        uiY: defaultSettings.uiY,
+      });
+      jb()?.saveProps?.("uiX", "0");
+      jb()?.saveProps?.("uiY", "0");
+      jb()?.moveWindow?.(0, 0);
     },
     setSettingsPanelWidth: (settingsPanelWidth) => {
       set({ settingsPanelWidth });

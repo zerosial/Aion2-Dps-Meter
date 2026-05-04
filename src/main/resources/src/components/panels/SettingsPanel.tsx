@@ -1,4 +1,4 @@
-import { useCallback, useEffect,  useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useShallow } from "zustand/react/shallow";
 import { useHotkeyCapture } from "@/hooks/useHotkeyCapture";
@@ -165,6 +165,7 @@ export const SettingsPanel = ({
   const toggleAutoHide = useSettingsStore((s) => s.toggleAutoHide);
   const resetJoinPanelPosition = useSettingsStore((s) => s.resetJoinPanelPosition);
   const resetSidePanelPosition = useSettingsStore((s) => s.resetSidePanelPosition);
+  const resetMeterPosition = useSettingsStore((s) => s.resetMeterPosition);
 
   const {
     pending: pendingHide,
@@ -689,6 +690,14 @@ export const SettingsPanel = ({
             className="w-full opacity-50 hover:opacity-100 hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
             <RotateCcw className="w-3 h-3" />
             사이드 패널 위치 초기화
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetMeterPosition}
+            className="w-full opacity-50 hover:opacity-100 hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
+            <RotateCcw className="w-3 h-3" />
+            미터기 위치 초기화
           </Button>
         </SettingsItem>
       </div>

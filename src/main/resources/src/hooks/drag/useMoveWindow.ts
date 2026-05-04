@@ -7,9 +7,7 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
 
   useEffect(() => {
     const el =
-      typeof target === "string"
-        ? document.querySelector<HTMLElement>(target)
-        : target.current;
+      typeof target === "string" ? document.querySelector<HTMLElement>(target) : target.current;
     if (!el) return;
 
     let isDragging = false;
@@ -29,6 +27,7 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
       startY = e.screenY;
       initialStageX = window.screenX;
       initialStageY = window.screenY;
+      (window as any).javaBridge?.onDragStart(window.outerWidth, window.outerHeight);
     };
 
     const handleMouseMove = (e: globalThis.MouseEvent) => {
@@ -42,13 +41,19 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
         wasDraggingRef.current = true;
       }
 
-      (window as any).javaBridge.moveWindow(initialStageX + deltaX, initialStageY + deltaY);
+      const newX = initialStageX + deltaX;
+      const newY = initialStageY + deltaY;
+
+      (window as any).javaBridge.moveWindow(newX, newY);
+      (window as any).javaBridge.onDragMove(newX, newY); // ghost 동기화
     };
 
     const handleMouseUp = () => {
       if (isDragging && wasDraggingRef.current) {
         setWindowPosition(window.screenX, window.screenY);
       }
+      (window as any).javaBridge?.onDragEnd();
+
       isDragging = false;
       setTimeout(() => {
         wasDraggingRef.current = false;
@@ -64,7 +69,7 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [setWindowPosition]); 
+  }, [setWindowPosition]);
 
   return { wasDraggingRef };
 };

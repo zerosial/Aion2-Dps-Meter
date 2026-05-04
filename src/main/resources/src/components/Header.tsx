@@ -46,16 +46,20 @@ export const Header = memo(
 
     return (
       <div className=" flex justify-between items-center">
-        <div className="w-20 h-full">
-          <div ref={dragRef}  className="window-drag-handle cursor-grab active:cursor-grabbing opacity-40 hover:opacity-100 transition-opacity p-1">
+        <div className="flex gap-2">
+          <div
+            ref={dragRef}
+            className="window-drag-handle cursor-grab active:cursor-grabbing opacity-70 hover:opacity-100 transition-opacity p-1">
             <Grip className="size-4" />
           </div>
-          <img
-            src={logoSrc}
-            className={`${className} max-w-full`}
-            width={80}
-            height={32}
-          />
+          <div className="w-20 h-full ">
+            <img
+              src={logoSrc}
+              className={`${className} max-w-full`}
+              width={80}
+              height={32}
+            />
+          </div>
         </div>
 
         <div className={`${className} flex gap-2`}>
