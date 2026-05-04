@@ -34,7 +34,7 @@ export const TargetInfo = memo(({ targetName, rowHeight, remainHp, maxHp }: Prop
           <>
             <span>{renderHpValue(formatAmount(remainHp))}</span>
             {/* <span className="mx-0.5">{renderDivider()}</span> */}
-            <span className="ml-0.5 opacity-70 ">({formatAmount(maxHp)})</span>{" "}
+            <span className="ml-0.5 ">({formatAmount(maxHp)})</span>{" "}
             <span className="ml-2">{renderHpValue(percent)}</span>
           </>
         );
