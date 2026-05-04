@@ -683,6 +683,14 @@ export const SettingsPanel = ({
           <Button
             variant="ghost"
             size="sm"
+            onClick={resetMeterPosition}
+            className="w-full opacity-50 hover:opacity-100 hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
+            <RotateCcw className="w-3 h-3" />
+            미터기 위치 초기화
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={resetJoinPanelPosition}
             className="w-full opacity-50 hover:opacity-100 hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
             <RotateCcw className="w-3 h-3" />
@@ -695,14 +703,6 @@ export const SettingsPanel = ({
             className="w-full opacity-50 hover:opacity-100 hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
             <RotateCcw className="w-3 h-3" />
             사이드 패널 위치 초기화
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetMeterPosition}
-            className="w-full opacity-50 hover:opacity-100 hover:bg-transition transition-opacity flex items-center gap-2 text-xs">
-            <RotateCcw className="w-3 h-3" />
-            미터기 위치 초기화
           </Button>
         </SettingsItem>
       </div>

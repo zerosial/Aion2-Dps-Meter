@@ -46,7 +46,7 @@ export const Header = memo(
 
     return (
       <div className=" flex justify-between items-center">
-        <div className="flex gap-2">
+        <div className={`flex gap-2 ${className}`}>
           <div
             ref={dragRef}
             className="window-drag-handle cursor-grab active:cursor-grabbing opacity-70 hover:opacity-100 transition-opacity p-1">
@@ -55,7 +55,7 @@ export const Header = memo(
           <div className="w-20 h-full ">
             <img
               src={logoSrc}
-              className={`${className} max-w-full`}
+              className={` max-w-full`}
               width={80}
               height={32}
             />
