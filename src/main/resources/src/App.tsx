@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useMeter } from "./hooks/useMeter";
 import type { Player, PanelType } from "@/types";
 import { MeterList } from "./components/MeterList";
-import { useDragWindow } from "@/hooks/drag/useDragWindow";
+import { useDragUi } from "@/hooks/drag/useDragUi";
 import { Header } from "@/components/Header.tsx";
 import { TargetInfo } from "@/components/TargetInfo";
 import { SidePanel } from "@/components/panels/SidePanel.tsx";
@@ -65,6 +65,8 @@ export default function App() {
     joinPanelOpacity,
     meterListOpacity,
     isClickThrough,
+    uiX,
+    uiY,
   } = useSettingsStore(
     useShallow((s) => ({
       headerPosition: s.headerPosition,
@@ -80,6 +82,8 @@ export default function App() {
       joinPanelOpacity: s.joinPanelOpacity,
       meterListOpacity: s.meterListOpacity,
       isClickThrough: s.isClickThrough,
+      uiX: s.uiX,
+      uiY: s.uiY,
     })),
   );
 
@@ -89,9 +93,7 @@ export default function App() {
     setActivePanel((prev) => (prev === panel ? null : panel));
   }, []);
   const [selected, setSelected] = useState<Player | null>(null);
-
-  const { wasDraggingRef } = useDragWindow(".drag-area");
-
+  const { wasDraggingRef } = useDragUi();
   // const handleToggleCollapse = useCallback(() => {
   //   toggleCollapse();
   //   setActivePanel(null);
@@ -104,7 +106,6 @@ export default function App() {
   //   setActivePanel(null);
   //   setSelected(null);
   // }, [reset]);
-
   const playersRef = useRef<Player[]>([]);
   useEffect(() => {
     playersRef.current = players;
@@ -211,6 +212,10 @@ export default function App() {
     <div
       style={
         {
+          position: "fixed",
+          left: uiX,
+          top: uiY,
+
           width: "fit-content",
           "--meter-bg": `rgba(12,22,40,${meterOpacity})`,
           "--panel-bg": `rgba(12,22,40,${panelOpacity})`,
@@ -229,6 +234,7 @@ export default function App() {
               className={headerClass}
               // reset={handleReset}
               setSettings={handlePanelToggle}
+
               // isCollapse={isCollapse}
               // toggleCollapse={handleToggleCollapse}
             />

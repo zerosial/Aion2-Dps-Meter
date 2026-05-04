@@ -4,7 +4,6 @@ declare global {
   interface Window {
     javaBridge?: {
       // resetDps?: () => void;
-      moveWindow?: (x: number, y: number) => void;
       startUpdate: (msiUrl: string) => void;
       getDpsData?: () => void;
 
@@ -26,6 +25,10 @@ declare global {
       isClickThrough?: () => boolean;
       getClickThroughHotkey?: () => string;
       updateClickThroughHotkey?: (modifiers: number, vkCode: number) => void;
+      fitToCurrentMonitor?: () => void;
+      onMonitorFit?: (monitorX: number, monitorY: number, width: number, height: number) => void;
+      onMeterPositionChanged?: (x: number, y: number) => void;
+      moveWindow?: (x: number, y: number) => void;
 
       isAutoHide?: () => boolean;
       toggleAutoHide?: () => void;

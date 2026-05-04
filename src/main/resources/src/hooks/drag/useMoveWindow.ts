@@ -1,12 +1,15 @@
 import { useSettingsStore } from "@/stores/useSettingsStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
-export const useDragWindow = (selector: string) => {
+export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) => {
   const wasDraggingRef = useRef(false);
   const setWindowPosition = useSettingsStore((s) => s.setWindowPosition);
 
   useEffect(() => {
-    const el = document.querySelector<HTMLElement>(selector);
+    const el =
+      typeof target === "string"
+        ? document.querySelector<HTMLElement>(target)
+        : target.current;
     if (!el) return;
 
     let isDragging = false;
@@ -16,8 +19,7 @@ export const useDragWindow = (selector: string) => {
     let initialStageY = 0;
 
     const handleMouseDown = (e: globalThis.MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const ignoreTarget = target.closest(
+      const ignoreTarget = (e.target as HTMLElement).closest(
         "input, button, .settingsPanel, .detailsPanel, .console, .resizeHandle, .drag-handle",
       );
       if (ignoreTarget) return;
@@ -47,7 +49,6 @@ export const useDragWindow = (selector: string) => {
       if (isDragging && wasDraggingRef.current) {
         setWindowPosition(window.screenX, window.screenY);
       }
-
       isDragging = false;
       setTimeout(() => {
         wasDraggingRef.current = false;
@@ -63,7 +64,7 @@ export const useDragWindow = (selector: string) => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [selector, setWindowPosition]);
+  }, [setWindowPosition]); 
 
   return { wasDraggingRef };
 };

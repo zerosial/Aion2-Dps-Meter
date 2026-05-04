@@ -275,7 +275,13 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         }
 
 
-        val scene = Scene(webView, 1920.0, 1080.0)
+val mainScreen = GraphicsEnvironment
+    .getLocalGraphicsEnvironment()
+    .defaultScreenDevice
+    .defaultConfiguration
+    .bounds
+
+val scene = Scene(webView, mainScreen.width.toDouble(), mainScreen.height.toDouble())
         scene.fill = Color.TRANSPARENT
 
         try {

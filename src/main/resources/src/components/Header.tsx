@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import logoSrc from "@/assets/logo.png";
 import type { PanelType } from "@/types";
-import { memo } from "react";
+import { memo, useRef } from "react";
 import {
   Settings,
   //  RefreshCcw,
@@ -9,6 +9,7 @@ import {
   ClipboardClock,
   Bug,
   UserRoundPlus,
+  Grip,
 } from "lucide-react";
 // import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
@@ -21,6 +22,7 @@ interface Props {
   className: string;
 }
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useMoveWindow } from "@/hooks/drag/useMoveWindow";
 
 export const Header = memo(
   ({
@@ -35,6 +37,8 @@ export const Header = memo(
     const exitApp = () => {
       (window as any).javaBridge.exitApp();
     };
+    const dragRef = useRef<HTMLDivElement>(null);
+    useMoveWindow(dragRef); // selector 대신 ref로 변경
 
     const toggleDebugConsole = () => {
       window.dispatchEvent(new CustomEvent("toggle-debug-console"));
@@ -43,6 +47,9 @@ export const Header = memo(
     return (
       <div className=" flex justify-between items-center">
         <div className="w-20 h-full">
+          <div ref={dragRef}  className="window-drag-handle cursor-grab active:cursor-grabbing opacity-40 hover:opacity-100 transition-opacity p-1">
+            <Grip className="size-4" />
+          </div>
           <img
             src={logoSrc}
             className={`${className} max-w-full`}

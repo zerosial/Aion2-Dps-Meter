@@ -142,6 +142,9 @@ interface SettingsState {
   updatePanelHeight: number;
   setUpdatePanelWidth: (w: number) => void;
   setUpdatePanelHeight: (h: number) => void;
+  uiX: number;
+  uiY: number;
+  setUiPosition: (x: number, y: number) => void;
 }
 
 const jb = () => (window as any).javaBridge;
@@ -191,6 +194,8 @@ const defaultSettings = {
   historyPanelHeight: 520,
   updatePanelWidth: 300,
   updatePanelHeight: 160,
+  uiX: 0,
+  uiY: 0,
 };
 
 export const useSettingsStore = create<SettingsState>((set) => {
@@ -305,6 +310,8 @@ export const useSettingsStore = create<SettingsState>((set) => {
         Number(j.loadProps?.("updatePanelWidth")) || defaultSettings.updatePanelWidth,
       updatePanelHeight:
         Number(j.loadProps?.("updatePanelHeight")) || defaultSettings.updatePanelHeight,
+      uiX: Number(j.loadProps?.("uiX")) || defaultSettings.uiX,
+      uiY: Number(j.loadProps?.("uiY")) || defaultSettings.uiY,
 
       isLoaded: true,
     });
@@ -357,6 +364,8 @@ export const useSettingsStore = create<SettingsState>((set) => {
     historyPanelHeight: defaultSettings.historyPanelHeight,
     updatePanelWidth: defaultSettings.updatePanelWidth,
     updatePanelHeight: defaultSettings.updatePanelHeight,
+    uiX: defaultSettings.uiX,
+    uiY: defaultSettings.uiY,
 
     // setHotkey: (hotkey) => {
     //   set({ hotkey });
@@ -535,6 +544,11 @@ export const useSettingsStore = create<SettingsState>((set) => {
     setUpdatePanelHeight: (updatePanelHeight) => {
       set({ updatePanelHeight });
       jb()?.saveProps?.("updatePanelHeight", String(updatePanelHeight));
+    },
+    setUiPosition: (uiX, uiY) => {
+      set({ uiX, uiY });
+      jb()?.saveProps?.("uiX", String(uiX));
+      jb()?.saveProps?.("uiY", String(uiY));
     },
   };
 });
