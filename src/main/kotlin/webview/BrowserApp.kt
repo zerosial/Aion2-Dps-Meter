@@ -40,7 +40,6 @@ import kotlin.system.exitProcess
 class BrowserApp(private val config: VersionConfig, private val dpsCalculator: DpsCalculator) : Application() {
 
     private val logger = LoggerFactory.getLogger(BrowserApp::class.java)
-private var ghostStage: Stage? = null
 
     private lateinit var engine: WebEngine
     private var trayIcon: TrayIcon? = null
@@ -229,79 +228,7 @@ private var ghostStage: Stage? = null
         fun pushRefuseJoinRequest(){
             engine.executeScript("onRefuseJoinRequest()")
         }
-fun onDragStart(width: Double, height: Double) {
-    if (ghostStage != null) return
 
-    Platform.runLater {
-        if (ghostStage != null) return@runLater
-
-        val ghost = Stage(StageStyle.TRANSPARENT)
-
-        val canvas = javafx.scene.canvas.Canvas(width, height)
-        val gc = canvas.graphicsContext2D
-
- gc.fill = Color.color(0.12, 0.12, 0.18, 1.0)
-gc.fillRect(0.0, 0.0, width, height)
-
- gc.stroke = Color.color(1.0, 1.0, 1.0, 0.25)
-gc.lineWidth = 1.0
-gc.strokeRect(1.0, 1.0, width - 2, height - 2)
-
-        val root = javafx.scene.layout.StackPane(canvas)
-
-        val ghostScene = Scene(root, width, height).apply {
-            fill = Color.TRANSPARENT
-        }
-
-        ghost.scene = ghostScene
-        ghost.isAlwaysOnTop = true
-        ghost.opacity = 0.65 
-        ghost.x = stage.x
-        ghost.y = stage.y
-        ghost.show()
-
-        val fade = javafx.animation.FadeTransition(Duration.millis(120.0), root).apply {
-            fromValue = 0.0
-            toValue = 1.0
-            interpolator = javafx.animation.Interpolator.EASE_OUT
-        }
-        val scale = javafx.animation.ScaleTransition(Duration.millis(120.0), root).apply {
-            fromX = 0.95; fromY = 0.95
-            toX = 1.0; toY = 1.0
-            interpolator = javafx.animation.Interpolator.EASE_OUT
-        }
-        javafx.animation.ParallelTransition(fade, scale).play()
-
-        ghostStage = ghost
-    }
-}
-fun onDragMove(x: Double, y: Double) {
-    Platform.runLater {
-        ghostStage?.let {
-            it.x = x
-            it.y = y
-        }
-    }
-}
-
-fun onDragEnd() {
-    Platform.runLater {
-        val ghost = ghostStage ?: return@runLater
-        val root = ghost.scene.root
-
-        val fade = javafx.animation.FadeTransition(Duration.millis(100.0), root).apply {
-            fromValue = 1.0
-            toValue = 0.0
-            interpolator = javafx.animation.Interpolator.EASE_OUT
-            setOnFinished {
-                ghost.close()
-                ghostStage = null
-            }
-        }
-
-        fade.play()
-    }
-}
 
     }
 
