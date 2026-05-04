@@ -1,6 +1,7 @@
 import { useHistory } from "@/hooks/useHistory";
 import bossIcon from "@/assets/bossIcon.png";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useEffect } from "react";
 
 interface Props {
   formatBattleTime: (ms: number) => string;
@@ -17,11 +18,13 @@ const formatDateTime = (ms: number) => {
 };
 
 export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
-  const { historyList, loading } = useHistory();
+  const { historyList, loading, fetchHistory } = useHistory();
   const theme = useSettingsStore((s) => s.theme);
   // const [uploadStatus, setUploadStatus] = useState<Record<number, UploadStatus>>({});
   // const [uploadSlugs, setUploadSlugs] = useState<Record<number, string>>({});
-
+  useEffect(() => {
+    fetchHistory();
+  }, []);
   // const isAnyUploading = Object.values(uploadStatus).some((s) => s === "loading");
 
   // const handleUpload = async (e: React.MouseEvent, idx: number) => {
