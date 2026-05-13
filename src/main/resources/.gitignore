@@ -26,3 +26,4 @@ dist-ssr
 **/skill-icons/
 **/constants/
 json/*
+/json/
