@@ -1,0 +1,74 @@
+name: Build and Release Aion2Meter4J
+
+on:
+  push:
+    tags:
+      - 'v*'  # v로 시작하는 모든 태그 (예: v1.7.2, v1.8.0-beta 등)에 대해 릴리즈 실행
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Java 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: src/main/resources/package-lock.json
+
+    - name: Read Version from build.gradle.kts
+      id: get_version
+      shell: pwsh
+      run: |
+        $content = Get-Content "build.gradle.kts" -Raw
+        if ($content -match 'version\s*=\s*"([^"]+)"') {
+          $version = $Matches[1]
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Detected version: $version"
+        } else {
+          Write-Error "Version not found in build.gradle.kts"
+          exit 1
+        }
+
+    - name: Build MSI Installer
+      shell: pwsh
+      run: |
+        .\gradlew.bat packageMsi --no-daemon --info
+
+    - name: Verify MSI Output
+      shell: pwsh
+      run: |
+        $msiPath = "build\compose\binaries\main\msi\aion2meter4j-${{ steps.get_version.outputs.version }}.msi"
+        if (Test-Path $msiPath) {
+          $size = (Get-Item $msiPath).Length / 1MB
+          Write-Host "MSI created: $msiPath ($([math]::Round($size,1)) MB)"
+        } else {
+          Write-Error "MSI not found at $msiPath"
+          Get-ChildItem -Recurse "build\compose\binaries" -ErrorAction SilentlyContinue
+          exit 1
+        }
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          build/compose/binaries/main/msi/aion2meter4j-${{ steps.get_version.outputs.version }}.msi
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'rc') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
