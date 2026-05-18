@@ -54,3 +54,6 @@ bin/
 ### Frontend build output ###
 /src/main/resources/dist/
 
+# Original compiled app installation folder
+/aion2meter4j/
+

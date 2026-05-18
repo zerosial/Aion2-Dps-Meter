@@ -24,6 +24,5 @@ dist-ssr
 *.sw?
 
 **/skill-icons/
-**/constants/
 json/*
 /json/
