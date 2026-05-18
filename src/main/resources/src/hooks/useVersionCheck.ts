@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { Version, UpdateInfo, DownloadState, CheckStatus } from "@/types";
 
-const API = "https://api.github.com/repos/TK-open-public/Aion2-Dps-Meter/releases?per_page=10";
-const RELEASE_URL = "https://github.com/TK-open-public/Aion2-Dps-Meter/releases";
+const API = "https://api.github.com/repos/zerosial/Aion2-Dps-Meter/releases?per_page=10";
+const RELEASE_URL = "https://github.com/zerosial/Aion2-Dps-Meter/releases";
 
 const RETRY_INTERVAL = 800;
 const RETRY_LIMIT = 5;
