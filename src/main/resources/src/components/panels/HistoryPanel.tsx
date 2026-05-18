@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useHistory } from "@/hooks/useHistory";
 import bossIcon from "@/assets/bossIcon.png";
 import { useSettingsStore } from "@/stores/useSettingsStore";
@@ -21,13 +22,17 @@ const formatDateTime = (ms: number) => {
 export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
   const { historyList, loading, fetchHistory } = useHistory();
   const theme = useSettingsStore((s) => s.theme);
-  const [uploadStatus, setUploadStatus] = useState<Record<number, UploadStatus>>({});
+  const [uploadStatus, setUploadStatus] = useState<
+    Record<number, UploadStatus>
+  >({});
 
   useEffect(() => {
     fetchHistory();
   }, []);
 
-  const isAnyUploading = Object.values(uploadStatus).some((s) => s === "loading");
+  const isAnyUploading = Object.values(uploadStatus).some(
+    (s) => s === "loading",
+  );
 
   const handleUpload = async (e: React.MouseEvent, idx: number) => {
     e.stopPropagation();
@@ -49,7 +54,9 @@ export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden ">
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden scrollbar-gutter:stable pt-1 pr-2">
-        {loading && <div className="text-center opacity-40 py-8">불러오는 중</div>}
+        {loading && (
+          <div className="text-center opacity-40 py-8">불러오는 중</div>
+        )}
         {!loading && historyList.length === 0 && (
           <div className="flex-1 text-center opacity-40 py-8 flex items-center justify-center">
             전투 기록이 없습니다
@@ -58,13 +65,12 @@ export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
         {historyList.map((item) => {
           const status = uploadStatus[item.idx] || "idle";
           return (
-            <div
-              key={item.idx}
-              className="flex items-center gap-2">
+            <div key={item.idx} className="flex items-center gap-2">
               <div
                 onClick={() => onSelectHistory(item.idx, item.raw)}
                 className="relative w-full px-3 rounded-lg overflow-hidden bg-black/30 cursor-pointer hover:brightness-125 transition-all duration-200"
-                style={{ minHeight: 52 }}>
+                style={{ minHeight: 52 }}
+              >
                 <div
                   className="absolute inset-0 origin-left"
                   style={{
@@ -75,10 +81,12 @@ export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
 
                 <div
                   className="relative flex items-center gap-3"
-                  style={{ minHeight: 52 }}>
+                  style={{ minHeight: 52 }}
+                >
                   <div
                     className="flex items-center justify-center shrink-0"
-                    style={{ width: 32, height: 32 }}>
+                    style={{ width: 32, height: 32 }}
+                  >
                     <img
                       src={bossIcon}
                       draggable={false}
@@ -90,7 +98,8 @@ export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
                     <div className="flex flex-col">
                       <span
                         className="font-bold text-shadow-meter truncate"
-                        style={{ color: "#ffffff" }}>
+                        style={{ color: "#ffffff" }}
+                      >
                         {item.mobName}
                       </span>
                       <span className="text-xs font-normal opacity-50">
@@ -101,7 +110,8 @@ export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
                       <span
                         className="font-bold text-shadow-meter"
-                        style={{ color: theme.bossRightValue }}>
+                        style={{ color: theme.bossRightValue }}
+                      >
                         {formatBattleTime(item.battleTime)}
                       </span>
                     </div>
@@ -111,12 +121,14 @@ export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
               {item.isBoss && (
                 <div
                   style={{ minHeight: 52 }}
-                  className="rounded-lg w-16 flex items-center justify-center bg-black/30 cursor-pointer hover:brightness-125 transition-all duration-200 shrink-0">
+                  className="rounded-lg w-16 flex items-center justify-center bg-black/30 cursor-pointer hover:brightness-125 transition-all duration-200 shrink-0"
+                >
                   <div className="flex items-center justify-center w-full h-full">
                     {status === "idle" && (
                       <div
                         className="flex flex-col justify-center items-center gap-1 opacity-60 hover:opacity-100 transition-opacity w-full h-full"
-                        onClick={(e) => handleUpload(e, item.idx)}>
+                        onClick={(e) => handleUpload(e, item.idx)}
+                      >
                         <Upload className="w-3.5 h-3.5" />
                         <p className="text-[10px] font-normal">업로드</p>
                       </div>
@@ -136,7 +148,8 @@ export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
                     {status === "error" && (
                       <div
                         className="flex flex-col justify-center items-center gap-1 opacity-80 hover:opacity-100 transition-opacity w-full h-full text-amber-500"
-                        onClick={(e) => handleUpload(e, item.idx)}>
+                        onClick={(e) => handleUpload(e, item.idx)}
+                      >
                         <AlertTriangle className="w-3.5 h-3.5" />
                         <p className="text-[10px] font-normal">실패</p>
                       </div>
@@ -151,4 +164,3 @@ export const HistoryPanel = ({ formatBattleTime, onSelectHistory }: Props) => {
     </div>
   );
 };
-
