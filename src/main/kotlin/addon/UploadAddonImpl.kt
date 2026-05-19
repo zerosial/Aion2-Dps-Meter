@@ -22,12 +22,12 @@ class UploadAddonImpl : BattleLogUploader {
     }
 
     private val uploadUrl: String by lazy {
-        val envUrl = System.getenv("UPLOAD_URL") ?: "https://aion2.cielui.com"
+        val envUrl = EnvLoader.get("UPLOAD_URL") ?: "https://aion2.cielui.com"
         if (envUrl.endsWith("/")) envUrl else "$envUrl/"
     }
 
     private val apiKey: String by lazy {
-        System.getenv("UPLOAD_API_KEY") ?: "ciel_a2m_secure_tr_9f3b8a1c6e2d4d"
+        EnvLoader.get("UPLOAD_API_KEY") ?: ""
     }
 
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -56,6 +56,12 @@ class UploadAddonImpl : BattleLogUploader {
             ((battleEnd - battleStart) / 1000.0).toInt().coerceAtLeast(1)
         } else {
             1
+        }
+
+        val totalDamage = log.report.information.values.sumOf { it.amount }
+        if (durationSec < 10 || totalDamage < 1_000_000.0) {
+            println("[UploadAddonImpl] Skip uploading: duration (${durationSec}s) < 10s or total damage (${totalDamage}) < 1,000,000")
+            return false
         }
 
         val timestampStr = dateFormatter.format(Instant.ofEpochMilli(battleStart.coerceAtLeast(1L)))

@@ -16,6 +16,15 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
+    - name: Create .env file from Secrets
+      shell: pwsh
+      run: |
+        $envContent = @"
+        ${{ secrets.ENV_FILE }}
+        "@
+        Set-Content -Path ".env" -Value $envContent -Encoding Utf8
+        Set-Content -Path "src/main/resources/.env" -Value $envContent -Encoding Utf8
+
     - name: Setup Java 21
       uses: actions/setup-java@v4
       with:

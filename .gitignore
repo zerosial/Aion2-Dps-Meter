@@ -56,3 +56,7 @@ bin/
 # Original compiled app installation folder
 /aion2meter4j/
 
+# Environment Variables
+.env
+*.env
+

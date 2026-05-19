@@ -373,6 +373,7 @@ object DataManager {
             userRepository.save(uid, it)
         }
         user.nickname = nickname
+        user.server = server
         if (isExecutor) {
             saveExecutorId(uid)
         }
