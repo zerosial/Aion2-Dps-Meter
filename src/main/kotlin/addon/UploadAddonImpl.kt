@@ -41,13 +41,51 @@ class UploadAddonImpl : BattleLogUploader {
             return false
         }
 
-        val selfUser = log.report.contributors.find { it.isExecutor } ?: return false
-        val selfName = selfUser.nickname ?: "Unknown"
-        val selfServerId = selfUser.server
-        val selfServer = ServerMap.getName(selfServerId)
+        // Robust User Resolution
+        val selfUser = log.report.contributors.find { it.isExecutor }
+            ?: log.report.contributors.firstOrNull { it.nickname != null && !it.nickname!!.all { c -> c.isDigit() } }
+            ?: log.report.contributors.firstOrNull()
+
+        val nameWithSuffix = selfUser?.nickname ?: "Unknown"
+        val selfName = stripServerSuffix(nameWithSuffix)
+
+        // Robust Server Resolution
+        var selfServerId = selfUser?.server ?: -1
+        var selfServer = ServerMap.getName(selfServerId)
         if (selfServer.isEmpty()) {
-            println("[UploadAddonImpl] Skip uploading: unknown self server ID $selfServerId")
-            return false
+            if (nameWithSuffix.contains('[') && nameWithSuffix.contains(']')) {
+                val start = nameWithSuffix.indexOf('[') + 1
+                val end = nameWithSuffix.indexOf(']')
+                if (end > start) {
+                    selfServer = nameWithSuffix.substring(start, end).trim()
+                }
+            }
+            if (selfServer.isEmpty()) {
+                // Try fallback from other contributors
+                val fallbackId = log.report.contributors
+                    .map { it.server }
+                    .firstOrNull { it in 1001..1021 || it in 2001..2021 }
+                if (fallbackId != null) {
+                    selfServer = ServerMap.getName(fallbackId)
+                } else {
+                    // Look at contributors' nicknames for server suffixes
+                    for (member in log.report.contributors) {
+                        val mNick = member.nickname ?: ""
+                        if (mNick.contains('[') && mNick.contains(']')) {
+                            val start = mNick.indexOf('[') + 1
+                            val end = mNick.indexOf(']')
+                            if (end > start) {
+                                selfServer = mNick.substring(start, end).trim()
+                                if (selfServer.isNotEmpty()) break
+                            }
+                        }
+                    }
+                }
+            }
+            // Ultimate fallback to "시엘"
+            if (selfServer.isEmpty()) {
+                selfServer = "시엘"
+            }
         }
 
         val battleStart = log.report.battleStart
@@ -59,8 +97,12 @@ class UploadAddonImpl : BattleLogUploader {
         }
 
         val totalDamage = log.report.information.values.sumOf { it.amount }
-        if (durationSec < 10 || totalDamage < 1_000_000.0) {
-            println("[UploadAddonImpl] Skip uploading: duration (${durationSec}s) < 10s or total damage (${totalDamage}) < 1,000,000")
+        val isLocalDev = uploadUrl.contains("localhost") || uploadUrl.contains("127.0.0.1")
+        val minDuration = if (isLocalDev) 1 else 10
+        val minDamage = if (isLocalDev) 1.0 else 1_000_000.0
+
+        if (durationSec < minDuration || totalDamage < minDamage) {
+            println("[UploadAddonImpl] Skip uploading: duration (${durationSec}s) < ${minDuration}s or total damage (${totalDamage}) < $minDamage")
             return false
         }
 

@@ -2,6 +2,7 @@ package com.tbread.data
 
 import com.tbread.data.repository.*
 import com.tbread.entity.*
+import com.tbread.addon.UploadManager
 import kotlinx.serialization.json.*
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -281,8 +282,26 @@ object DataManager {
             contributors = data.contributors.mapTo(mutableSetOf()) { it.copy() }
         )
         val packets = rawPacketsInRange(data.battleStart - 5000L, data.battleEnd)
-        battleLogRepository.save(DpsLog(snapshot, summonRepository.getAll(), packets))
+        val log = DpsLog(snapshot, summonRepository.getAll(), packets)
+        battleLogRepository.save(log)
         rawPacketBuffer.removeIf { it.timestamp <= data.battleEnd }
+
+        // 자동 업로드 기능 구현 (Background Thread 비동기 처리)
+        if (UploadManager.isAvailable()) {
+            Thread {
+                try {
+                    logger.info("[DataManager] 몹 전투 종료 감지: 전투 기록 자동 업로드 시작 (${snapshot.target?.mob?.name})")
+                    val success = UploadManager.upload(log)
+                    if (success) {
+                        logger.info("[DataManager] 전투 기록 자동 업로드 성공 (${snapshot.target?.mob?.name})")
+                    } else {
+                        logger.warn("[DataManager] 전투 기록 자동 업로드 실패 (${snapshot.target?.mob?.name})")
+                    }
+                } catch (e: Exception) {
+                    logger.error("[DataManager] 전투 기록 자동 업로드 중 예외 발생: ${e.message}", e)
+                }
+            }.start()
+        }
     }
 
     fun recentBattleList(): List<Pair<Int, DpsReport>> {
