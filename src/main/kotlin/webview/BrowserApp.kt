@@ -226,7 +226,21 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
             engine.executeScript("onRefuseJoinRequest()")
         }
 
-
+        fun fetchUrl(url: String): String {
+            return try {
+                val client = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(10)).build()
+                val request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(url))
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                    .GET()
+                    .build()
+                val response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString())
+                if (response.statusCode() in 200..299) response.body() else ""
+            } catch (e: Exception) {
+                logger.error("Failed to fetch URL: $url", e)
+                ""
+            }
+        }
     }
 
     @Volatile

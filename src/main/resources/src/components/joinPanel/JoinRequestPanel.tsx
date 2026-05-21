@@ -278,11 +278,19 @@ export const JoinRequestPanel = memo(() => {
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        {tierInfoMap[r.requester] && tierInfoMap[r.requester].combatPowerTier !== "Unranked" && (
-                          <TierBadge label="4주" tier={tierInfoMap[r.requester].combatPowerTier} />
-                        )}
-                        {tierInfoMap[r.requester] && tierInfoMap[r.requester].classTier !== "Unranked" && (
-                          <TierBadge label="2주" tier={tierInfoMap[r.requester].classTier} />
+                        {!tierInfoMap[r.requester] || tierInfoMap[r.requester].isPending ? (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-white/10 bg-black/20">
+                            <span className="text-[10px] text-white/50 animate-pulse">조회중...</span>
+                          </div>
+                        ) : (
+                          <>
+                            {tierInfoMap[r.requester].combatPowerTier !== "언랭크" && (
+                              <TierBadge label="4주" tier={tierInfoMap[r.requester].combatPowerTier} />
+                            )}
+                            {tierInfoMap[r.requester].classTier !== "언랭크" && (
+                              <TierBadge label="2주" tier={tierInfoMap[r.requester].classTier} />
+                            )}
+                          </>
                         )}
                         <span className="text-shadow-meter text-sm tabular-nums text-[#10f1e2] shrink-0 ml-1">
                           {`${(r.power / 1000).toFixed(1)}k`}
