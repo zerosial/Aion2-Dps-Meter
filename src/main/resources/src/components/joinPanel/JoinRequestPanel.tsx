@@ -15,7 +15,8 @@ import { useResizableJoinPanel } from "@/hooks/resize/useResizableJoinPanel";
 import { useDraggablePanel } from "@/hooks/drag/useDraggablePanel";
 import { ResizeHandle } from "../ResizeHandle";
 import { Slider } from "@/components/ui/slider";
-
+import { useTiers } from "@/hooks/useTiers";
+import { TierBadge } from "./TierBadge";
 const TOTAL_SEC = 20;
 const DEFAULT_JOIN_PANEL_GAP = 8;
 const DEFAULT_JOIN_PANEL_X = 0;
@@ -103,6 +104,7 @@ export const JoinRequestPanel = memo(() => {
   const [visible, setVisible] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const { joinPanelHeight, joinPanelWidth, onMouseDownCorner } = useResizableJoinPanel();
+  const tierInfoMap = useTiers(requests);
 
   const {
     visibleSkillCodes,
@@ -275,9 +277,17 @@ export const JoinRequestPanel = memo(() => {
                           {getServerLabel(r.server) ? `[${getServerLabel(r.server)}]` : ""}
                         </span>
                       </div>
-                      <span className="text-shadow-meter text-sm tabular-nums text-[#10f1e2] shrink-0">
-                        {`${(r.power / 1000).toFixed(1)}k`}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {tierInfoMap[r.requester] && tierInfoMap[r.requester].combatPowerTier !== "Unranked" && (
+                          <TierBadge label="4주" tier={tierInfoMap[r.requester].combatPowerTier} />
+                        )}
+                        {tierInfoMap[r.requester] && tierInfoMap[r.requester].classTier !== "Unranked" && (
+                          <TierBadge label="2주" tier={tierInfoMap[r.requester].classTier} />
+                        )}
+                        <span className="text-shadow-meter text-sm tabular-nums text-[#10f1e2] shrink-0 ml-1">
+                          {`${(r.power / 1000).toFixed(1)}k`}
+                        </span>
+                      </div>
                     </div>
 
                     {(normalBadges.length > 0 || stigmaBadges.length > 0) && (
