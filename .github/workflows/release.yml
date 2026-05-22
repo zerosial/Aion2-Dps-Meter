@@ -2,8 +2,8 @@ name: Build and Release Aion2Meter4J
 
 on:
   push:
-    tags:
-      - 'v*'  # v로 시작하는 모든 태그 (예: v1.7.2, v1.8.0-beta 등)에 대해 릴리즈 실행
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -75,9 +75,9 @@ jobs:
       with:
         files: |
           build/compose/binaries/main/msi/aion2meter4j-${{ steps.get_version.outputs.version }}.msi
-        tag_name: ${{ github.ref_name }}
-        name: Release ${{ github.ref_name }}
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: Release v${{ steps.get_version.outputs.version }}
         draft: false
-        prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'rc') }}
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
