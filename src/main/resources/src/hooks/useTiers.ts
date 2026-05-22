@@ -28,8 +28,8 @@ const getAionIngBaseUrl = () => {
 const CRAWL_CHUNK_SIZE = 5;
 
 export interface ProfileTierInfo {
-  combatPowerTier: Tier;
-  classTier: Tier;
+  allTimeSpecTier: Tier;
+  recentSpecTier: Tier;
   isPending?: boolean;
 }
 
@@ -85,12 +85,12 @@ export function useTiers(requests: JoinRequestUser[]) {
                 profile;
 
               const tiers = profile.tiers || {};
-              const powerTier = tiers.recentSpec?.tier || "언랭크";
-              const classTier = tiers.recentGlobal?.tier || "언랭크";
+              const allTimeSpecTier = tiers.allTimeSpec?.tier || "언랭크";
+              const recentSpecTier = tiers.recentSpec?.tier || "언랭크";
 
               next[req.requester] = {
-                combatPowerTier: powerTier,
-                classTier: classTier,
+                allTimeSpecTier,
+                recentSpecTier,
                 // isStale인 경우 갱신 진행 중임을 표시
                 isPending: profile.isStale,
               };
@@ -184,11 +184,11 @@ export function useTiers(requests: JoinRequestUser[]) {
         if (req) {
           profileCacheRef.current[cacheKey] = updated;
           const tiers = updated.tiers || {};
-          const powerTier = tiers.recentSpec?.tier || "언랭크";
-          const classTier = tiers.recentGlobal?.tier || "언랭크";
+          const allTimeSpecTier = tiers.allTimeSpec?.tier || "언랭크";
+          const recentSpecTier = tiers.recentSpec?.tier || "언랭크";
           next[req.requester] = {
-            combatPowerTier: powerTier,
-            classTier: classTier,
+            allTimeSpecTier,
+            recentSpecTier,
             isPending: false,
           };
         }

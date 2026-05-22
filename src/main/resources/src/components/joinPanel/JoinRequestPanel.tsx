@@ -321,11 +321,11 @@ export const JoinRequestPanel = memo(() => {
                           </div>
                         ) : (
                           <>
-                            {tierInfoMap[r.requester].combatPowerTier && (
-                              <TierBadge label="전체" tier={tierInfoMap[r.requester].combatPowerTier} />
+                            {tierInfoMap[r.requester].allTimeSpecTier && (
+                              <TierBadge label="전체" tier={tierInfoMap[r.requester].allTimeSpecTier} />
                             )}
-                            {tierInfoMap[r.requester].classTier && (
-                              <TierBadge label="2주" tier={tierInfoMap[r.requester].classTier} />
+                            {tierInfoMap[r.requester].recentSpecTier && (
+                              <TierBadge label="2주" tier={tierInfoMap[r.requester].recentSpecTier} />
                             )}
                           </>
                         )}
