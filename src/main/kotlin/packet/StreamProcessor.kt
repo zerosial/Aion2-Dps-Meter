@@ -64,6 +64,8 @@ class StreamProcessor() {
     fun onPacketReceived(packet: ByteArray, arrivedAt: Long) {
         if (packet.size == 3) return
 
+        OdeGroupParser.parseOdeGroupPacket(packet, arrivedAt, this)
+
         PacketLogger.logPacket(packet, arrivedAt)
 
 //        DataManager.saveRawPacket(packet, arrivedAt)

@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import logoSrc from "@/assets/logo.png";
 import type { PanelType } from "@/types";
 import { memo, useRef } from "react";
 import {
@@ -24,6 +23,7 @@ interface Props {
   // toggleCollapse: () => void;
   className: string;
 }
+import { DungeonPopover } from "./DungeonPopover";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useMoveWindow } from "@/hooks/drag/useMoveWindow";
 
@@ -74,12 +74,7 @@ export const Header = memo(
             <Grip className="size-4" />
           </div>
           <div className="w-20 h-full ">
-            <img
-              src={logoSrc}
-              className={` max-w-full`}
-              width={80}
-              height={32}
-            />
+            {/* Logo removed as requested */}
           </div>
         </div>
 
@@ -146,6 +141,8 @@ export const Header = memo(
               </span>
             )}
           </Button>
+
+          <DungeonPopover />
 
           {/* <Tooltip>
             <TooltipTrigger asChild> */}

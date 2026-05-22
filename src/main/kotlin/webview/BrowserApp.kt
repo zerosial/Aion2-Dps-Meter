@@ -103,6 +103,19 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
             return HotkeyHandler.getVisibilityHotkey().toString()
         }
 
+        fun getDungeonData(): String {
+            val jsonObject = kotlinx.serialization.json.buildJsonObject {
+                put("username", kotlinx.serialization.json.JsonPrimitive(com.tbread.data.DungeonDataManager.username))
+                put("ode", kotlinx.serialization.json.JsonPrimitive(com.tbread.data.DungeonDataManager.ode))
+                put("dungeon", kotlinx.serialization.json.JsonPrimitive(com.tbread.data.DungeonDataManager.dungeon))
+                put("dungeonBoss", kotlinx.serialization.json.JsonPrimitive(com.tbread.data.DungeonDataManager.dungeonBoss))
+                put("transcend", kotlinx.serialization.json.JsonPrimitive(com.tbread.data.DungeonDataManager.transcend))
+                put("transcendBoss", kotlinx.serialization.json.JsonPrimitive(com.tbread.data.DungeonDataManager.transcendBoss))
+                put("lastUpdated", kotlinx.serialization.json.JsonPrimitive(com.tbread.data.DungeonDataManager.lastUpdated))
+            }
+            return jsonObject.toString()
+        }
+
         fun updateHideHotkey(modifiers: Int, vkCode: Int) {
             HotkeyHandler.updateVisibilityHotkey(modifiers, vkCode)
         }
