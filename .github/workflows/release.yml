@@ -55,6 +55,8 @@ jobs:
 
     - name: Build MSI Installer
       shell: pwsh
+      env:
+        GITHUB_REF: ${{ github.ref }}
       run: |
         .\gradlew.bat packageMsi --no-daemon --info
 
