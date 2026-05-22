@@ -62,7 +62,7 @@ tasks.processResources {
 repositories { 
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    maven("https://jogamp.org/deployment/maven")
+    // maven("https://jogamp.org/deployment/maven")
     maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     google()
 }
