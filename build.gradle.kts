@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.tbread"
-version = "1.7.3"
+version = "1.7.4"
 
 val frontendDir = layout.projectDirectory.dir("src/main/resources")
 val frontendBuildInputs = fileTree(frontendDir) {
@@ -113,6 +113,7 @@ compose.desktop {
                 menu = true
                 menuGroup = "aion2meter4j"
                 dirChooser = true
+                iconFile.set(project.file("icon.ico"))
             }
             targetFormats(TargetFormat.Msi)
             packageName = "aion2meter4j"
