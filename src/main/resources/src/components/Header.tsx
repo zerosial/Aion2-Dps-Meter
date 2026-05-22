@@ -10,7 +10,10 @@ import {
   Bug,
   UserRoundPlus,
   Grip,
+  CircleDot,
+  Square,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 // import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useJoinRequestStore } from "@/stores/useJoinRequestStore";
 
@@ -44,6 +47,24 @@ export const Header = memo(
       window.dispatchEvent(new CustomEvent("toggle-debug-console"));
     };
 
+    const [isRecording, setIsRecording] = useState(false);
+
+    useEffect(() => {
+      if ((window as any).javaBridge?.isPacketRecording) {
+        setIsRecording((window as any).javaBridge.isPacketRecording());
+      }
+    }, []);
+
+    const toggleRecording = () => {
+      if (isRecording) {
+        (window as any).javaBridge?.stopPacketRecording();
+        setIsRecording(false);
+      } else {
+        (window as any).javaBridge?.startPacketRecording();
+        setIsRecording(true);
+      }
+    };
+
     return (
       <div className=" flex justify-between items-center">
         <div className={`flex gap-2 ${className}`}>
@@ -61,6 +82,31 @@ export const Header = memo(
             />
           </div>
         </div>
+
+        {/* dev 환경 전용 패킷 기록 버튼 (중앙 배치) */}
+        {/* @ts-ignore */}
+        {typeof __IS_LOCAL__ !== "undefined" && __IS_LOCAL__ && (
+          <div className="flex items-center">
+            <Button
+              variant={isRecording ? "destructive" : "secondary"}
+              size="sm"
+              onClick={toggleRecording}
+              className={`h-7 px-3 text-xs gap-1.5 ${isRecording ? 'animate-pulse' : ''}`}
+            >
+              {isRecording ? (
+                <>
+                  <Square className="size-3" fill="currentColor" />
+                  기록 중지
+                </>
+              ) : (
+                <>
+                  <CircleDot className="size-3 text-red-500" />
+                  로그 기록 시작
+                </>
+              )}
+            </Button>
+          </div>
+        )}
 
         <div className={`${className} flex gap-2`}>
           {/* <Tooltip>

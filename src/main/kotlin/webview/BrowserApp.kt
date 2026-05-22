@@ -140,6 +140,18 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
             return Json.encodeToString(dpsCalculator.battleDetails(DataManager.battleLog(idx)?.report, uid))
         }
 
+        fun startPacketRecording() {
+            com.tbread.packet.PacketLogger.startRecording()
+        }
+
+        fun stopPacketRecording() {
+            com.tbread.packet.PacketLogger.stopRecording()
+        }
+
+        fun isPacketRecording(): Boolean {
+            return com.tbread.packet.PacketLogger.isRecording
+        }
+
         fun getBattleList(): String {
             return Json.encodeToString(DataManager.recentBattleList())
         }
