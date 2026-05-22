@@ -33,7 +33,7 @@ interface RawCombatData {
   target?: Target;
 }
 
-const SERVER_NAMES: Record<string, string> = {
+export const SERVER_NAMES: Record<string, string> = {
   "1001": "시엘",
   "1002": "네자칸",
   "1003": "바이젤",

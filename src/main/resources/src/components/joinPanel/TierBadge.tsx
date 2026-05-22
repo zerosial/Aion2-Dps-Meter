@@ -33,8 +33,17 @@ const tierConfig: Record<Tier, { color: string; bg: string; anim?: string; borde
   "언랭크": { color: "#94a3b8", bg: "rgba(148, 163, 184, 0.12)", border: "rgba(148, 163, 184, 0.3)" },
 };
 
+function getShortTierName(tier: string) {
+  if (tier === "그랜드마스터") return "그마";
+  if (tier === "다이아몬드") return "다이아";
+  if (tier === "에메랄드") return "에메";
+  if (tier === "플래티넘") return "플래";
+  return tier;
+}
+
 export function TierBadge({ label, tier, className }: TierBadgeProps) {
   const config = tierConfig[tier] || tierConfig["언랭크"];
+  const shortTier = getShortTierName(tier);
   
   return (
     <div
@@ -51,7 +60,7 @@ export function TierBadge({ label, tier, className }: TierBadgeProps) {
       title={`${label} - ${tier}`}
     >
       <span className="opacity-70 text-[9px] uppercase tracking-wider">{label}</span>
-      <span className="text-[11px] text-shadow-meter">{tier}</span>
+      <span className="text-[11px] text-shadow-meter">{shortTier}</span>
     </div>
   );
 }

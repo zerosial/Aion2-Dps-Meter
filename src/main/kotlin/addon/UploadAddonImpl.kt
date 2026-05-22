@@ -22,7 +22,7 @@ class UploadAddonImpl : BattleLogUploader {
     }
 
     private val uploadUrl: String by lazy {
-        val envUrl = EnvLoader.get("UPLOAD_URL") ?: "https://cielui.com"
+        val envUrl = EnvLoader.get("UPLOAD_URL") ?: "http://localhost:5173/"
         if (envUrl.endsWith("/")) envUrl else "$envUrl/"
     }
 

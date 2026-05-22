@@ -149,7 +149,7 @@ interface SettingsState {
 }
 
 const jb = () => (window as any).javaBridge;
-const MAX_INIT_ATTEMPTS = 200;
+const MAX_INIT_ATTEMPTS = import.meta.env.DEV ? 10 : 200; // 개발모드에선 1초만 대기
 
 const defaultSettings = {
   hotkey: { modifiers: 2, vkCode: 0x52 },

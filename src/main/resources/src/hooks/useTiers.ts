@@ -1,34 +1,31 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
+import { SERVER_NAMES } from "../utils/parser";
 import type { JoinRequestUser } from "@/stores/useJoinRequestStore";
 import type { Tier } from "@/components/joinPanel/TierBadge";
 
-const BASE_URL = "https://cielui.com";
+// ── 환경별 BASE_URL ──
+// 빌드 시점에 .env 파일에 정의된 변수가 주입됩니다.
+// VITE_CIELUI_BASE_URL: 상용 빌드 시 사용할 API 서버 주소
+// VITE_AION_ING_BASE: 상용 빌드 시 사용할 크롤링 타겟 주소
 
-interface BoxplotClassStat {
-  q1: number;
-  median: number;
-  q3: number;
-  min: number;
-  max: number;
-  sampleCount: number;
-  className: string;
-}
+const getCieluiBaseUrl = () => {
+  if ((window as any).javaBridge) {
+    return import.meta.env.VITE_CIELUI_BASE_URL || "";
+  }
+  return "";
+};
 
-interface BoxplotStatsResponse {
-  period: string;
-  updatedAt: string;
-  bosses: Record<string, BoxplotClassStat[]>;
-}
+const getAionIngBaseUrl = () => {
+  if ((window as any).javaBridge) {
+    return import.meta.env.VITE_AION_ING_BASE || "";
+  }
+  return "/proxy-aion";
+};
 
-interface PowerTierRange {
-  rangeStart: number;
-  classes: Record<string, { q1: number; q3: number; count: number }>;
-}
+// 스테일 기준: 기존 cielui.com 서버와 동일하게 24시간 (서버에서 판단하므로 프론트에서는 제외)
 
-interface PowerTierStatsResponse {
-  global: any;
-  ranges: PowerTierRange[];
-}
+// 병렬 크롤링 청크 크기 (동시 최대 5개)
+const CRAWL_CHUNK_SIZE = 5;
 
 export interface ProfileTierInfo {
   combatPowerTier: Tier;
@@ -37,177 +34,183 @@ export interface ProfileTierInfo {
 }
 
 export function useTiers(requests: JoinRequestUser[]) {
-  const [tierInfoMap, setTierInfoMap] = useState<Record<number, ProfileTierInfo>>({});
-  
-  const powerStatsRef = useRef<PowerTierStatsResponse | null>(null);
-  const classStatsRef = useRef<BoxplotStatsResponse | null>(null);
+  const [tierInfoMap, setTierInfoMap] = useState<
+    Record<number, ProfileTierInfo>
+  >({});
   const profileCacheRef = useRef<Record<string, any>>({});
-
-  // Fetch Tier Definitions on Mount
-  useEffect(() => {
-    fetch(`${BASE_URL}/api/tier-stats`)
-      .then(r => r.json())
-      .then(d => { powerStatsRef.current = d; })
-      .catch(e => console.error("Failed to fetch power tier stats", e));
-
-    fetch(`${BASE_URL}/api/stats/boxplot?period=14d`)
-      .then(r => r.json())
-      .then(d => { classStatsRef.current = d; })
-      .catch(e => console.error("Failed to fetch class tier stats", e));
-  }, []);
-
-  const calculateTier11 = (dps: number, q1: number, q3: number): { tier: Tier; score: number } => {
-    if (!q1 || !q3 || q1 === q3) return { tier: "언랭크", score: 0 };
-    const pct = (dps - q1) / (q3 - q1);
-    const score = pct * 100 + 40;
-    
-    let tier: Tier = "언랭크";
-    if (score < 0.0) tier = "언랭크";
-    else if (score >= 170.0) tier = "챌린저";
-    else if (score >= 155.0) tier = "그랜드마스터";
-    else if (score >= 140.0) tier = "마스터";
-    else if (score >= 120.0) tier = "다이아몬드";
-    else if (score >= 100.0) tier = "에메랄드";
-    else if (score >= 80.0) tier = "플래티넘";
-    else if (score >= 60.0) tier = "골드";
-    else if (score >= 40.0) tier = "실버";
-    else if (score >= 20.0) tier = "브론즈";
-    else tier = "아이언";
-    
-    return { tier, score };
-  };
-
-  const getJobName = (jobCode: string | null) => {
-    if (!jobCode) return "데바";
-    return jobCode; // e.g. "살성"
-  };
-
-  const computeTiersForProfile = useCallback((req: JoinRequestUser, profile: any): ProfileTierInfo => {
-    const jobName = getJobName(req.job);
-    let bestPowerTier: Tier = "언랭크";
-    let bestPowerScore = -1;
-    let bestClassTier: Tier = "언랭크";
-    let bestClassScore = -1;
-
-    const dpsRecords = profile.bossRecords || [];
-    if (dpsRecords.length === 0) {
-      return { combatPowerTier: "언랭크", classTier: "언랭크" };
-    }
-
-    const combatPower = req.power;
-    const powerRange = powerStatsRef.current?.ranges.find(
-      (r: any) => combatPower >= r.rangeStart && combatPower < r.rangeStart + 20000
-    );
-
-    dpsRecords.forEach((record: any) => {
-      const boss = record.bossName;
-      const dps = record.dps;
-
-      // 1. Power Tier (4-week)
-      if (powerRange && powerRange.classes[jobName]) {
-        const stats = powerRange.classes[jobName];
-        const res = calculateTier11(dps, stats.q1, stats.q3);
-        if (res.score > bestPowerScore) {
-          bestPowerScore = res.score;
-          bestPowerTier = res.tier;
-        }
-      }
-
-      // 2. Class Tier (2-week)
-      const cStats = classStatsRef.current?.bosses[boss]?.find((c: any) => c.className === jobName);
-      if (cStats) {
-        const res = calculateTier11(dps, cStats.q1, cStats.q3);
-        if (res.score > bestClassScore) {
-          bestClassScore = res.score;
-          bestClassTier = res.tier;
-        }
-      }
-    });
-
-    return { combatPowerTier: bestPowerTier, classTier: bestClassTier };
-  }, []);
+  // 진행 중인 크롤링 중복 방지
+  const crawlingRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (requests.length === 0) return;
 
-    const newRequests = requests.filter(r => !tierInfoMap[r.requester]);
+    const newRequests = requests.filter((r) => !tierInfoMap[r.requester]);
     if (newRequests.length === 0) return;
 
-    const payload = newRequests.map(r => ({ server: r.server.toString(), name: r.nickname }));
+    const payload = newRequests.map((r) => ({
+      server: r.server.toString(),
+      name: r.nickname,
+    }));
 
-    fetch(`${BASE_URL}/api/party/profiles`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-      .then(res => res.json())
-      .then((profiles: any[]) => {
-        setTierInfoMap(prev => {
+    // ── 1단계: cielui.com에서 배치 프로필 조회 ──
+    const doFetchProfiles = async () => {
+      try {
+        let profiles: any[];
+        const baseUrl = getCieluiBaseUrl();
+        if ((window as any).javaBridge && (window as any).javaBridge.postUrl) {
+          const resStr = (window as any).javaBridge.postUrl(`${baseUrl}/api/meter/profiles`, JSON.stringify(payload));
+          profiles = resStr ? JSON.parse(resStr) : [];
+        } else {
+          const res = await fetch(`${baseUrl}/api/meter/profiles`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          profiles = await res.json();
+        }
+
+        // ── 2단계: 받은 티어를 즉시 표시 ──
+        setTierInfoMap((prev) => {
           const next = { ...prev };
-          newRequests.forEach(req => {
-            const profile = profiles.find(p => p.name === req.nickname && (parseInt(p.server) === req.server || p.server === req.server.toString()));
+          newRequests.forEach((req) => {
+            const profile = profiles.find(
+              (p) =>
+                p.name === req.nickname &&
+                (parseInt(p.server) === req.server ||
+                  p.server === req.server.toString()),
+            );
             if (profile) {
-              profileCacheRef.current[`${req.server}-${req.nickname}`] = profile;
-              const tiers = computeTiersForProfile(req, profile);
-              tiers.isPending = profile.isPending;
-              next[req.requester] = tiers;
+              profileCacheRef.current[`${req.server}-${req.nickname}`] =
+                profile;
+
+              const tiers = profile.tiers || {};
+              const powerTier = tiers.recentSpec?.tier || "언랭크";
+              const classTier = tiers.recentGlobal?.tier || "언랭크";
+
+              next[req.requester] = {
+                combatPowerTier: powerTier,
+                classTier: classTier,
+                // isStale인 경우 갱신 진행 중임을 표시
+                isPending: profile.isStale,
+              };
             }
           });
           return next;
         });
 
-        // 2. Handle pending profiles via client-side distributed scraping
-        const pendingProfiles = profiles.filter(p => p.isPending);
-        if (pendingProfiles.length > 0) {
-          pendingProfiles.forEach(p => {
-            const aionIngUrl = `https://aion.ing/p/char/?server_id=&server=${encodeURIComponent(p.server)}&name=${encodeURIComponent(p.name)}`;
-            
-            // Run asynchronously so it doesn't block UI
-            setTimeout(async () => {
-              try {
-                let html = "";
-                if ((window as any).javaBridge) {
-                  html = (window as any).javaBridge.fetchUrl(aionIngUrl);
-                } else {
-                  // Fallback for local web dev without CORS limits
-                  const res = await fetch(aionIngUrl);
-                  html = await res.text();
-                }
-
-                if (!html) return;
-
-                // Send HTML raw string to backend
-                const syncRes = await fetch(`${BASE_URL}/api/character/sync-html`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ server: p.server, name: p.name, html })
-                });
-
-                if (syncRes.ok) {
-                  const syncedProfile = await syncRes.json();
-                  
-                  setTierInfoMap(prev => {
-                    const next = { ...prev };
-                    const req = newRequests.find(r => r.nickname === p.name && (parseInt(r.server as any) === parseInt(p.server) || r.server.toString() === p.server));
-                    if (req) {
-                      profileCacheRef.current[`${req.server}-${req.nickname}`] = syncedProfile;
-                      const tiers = computeTiersForProfile(req, syncedProfile);
-                      tiers.isPending = false;
-                      next[req.requester] = tiers;
-                    }
-                    return next;
-                  });
-                }
-              } catch (e) {
-                console.error("Distributed scrape failed for", p.name, e);
-              }
-            }, 0);
-          });
+        // ── 3단계: isStale인 캐릭터를 병렬 크롤링 후 최신화 ──
+        const staleProfiles = profiles.filter((p) => p.isStale);
+        if (staleProfiles.length > 0) {
+          // 청크 단위로 나눠서 순차 처리 (각 청크 내부는 병렬)
+          (async () => {
+            for (let i = 0; i < staleProfiles.length; i += CRAWL_CHUNK_SIZE) {
+              const chunk = staleProfiles.slice(i, i + CRAWL_CHUNK_SIZE);
+              await Promise.all(
+                chunk.map((p) => crawlAndSync(p, newRequests))
+              );
+            }
+          })();
         }
-      })
-      .catch(err => console.error("Failed to fetch profiles", err));
+      } catch (err) {
+        console.error("[useTiers] Failed to fetch profiles:", err);
+      }
+    };
+    
+    doFetchProfiles();
+  }, [requests, tierInfoMap]);
 
-  }, [requests, computeTiersForProfile, tierInfoMap]);
+  /**
+   * aion.ing에서 캐릭터 HTML을 크롤링하여 cielui.com으로 업로드,
+   * 재계산된 최신 티어로 화면을 갱신합니다.
+   */
+  async function crawlAndSync(
+    p: { server: string; name: string },
+    sourceRequests: JoinRequestUser[],
+  ) {
+    const cacheKey = `${p.server}-${p.name}`;
+    if (crawlingRef.current.has(cacheKey)) return;
+    crawlingRef.current.add(cacheKey);
+
+    try {
+      const serverName = SERVER_NAMES[p.server.toString()] || "";
+      const baseUrl = getAionIngBaseUrl();
+      const aionIngUrl = `${baseUrl}/p/char/?server_id=${encodeURIComponent(p.server)}&server=${encodeURIComponent(serverName)}&name=${encodeURIComponent(p.name)}`;
+
+      // ── aion.ing 크롤링 ──
+      let html = "";
+      if ((window as any).javaBridge) {
+        html = (window as any).javaBridge.fetchUrl(aionIngUrl);
+      } else {
+        const r = await fetch(aionIngUrl);
+        if (!r.ok) throw new Error(`aion.ing fetch failed: ${r.status}`);
+        html = await r.text();
+      }
+
+      if (!html) {
+        console.warn("[useTiers] No HTML returned for", p.name);
+        return;
+      }
+
+      // ── cielui.com으로 크롤링 데이터 업로드 ──
+      const uploadPayload = { server: p.server, name: p.name, html };
+      let updated: any;
+      const cieluiBase = getCieluiBaseUrl();
+      if ((window as any).javaBridge && (window as any).javaBridge.postUrl) {
+        const resStr = (window as any).javaBridge.postUrl(`${cieluiBase}/api/meter/sync-data`, JSON.stringify(uploadPayload));
+        if (!resStr) throw new Error("Empty response from sync-data");
+        updated = JSON.parse(resStr);
+      } else {
+        const syncRes = await fetch(`${cieluiBase}/api/meter/sync-data`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(uploadPayload),
+        });
+        if (!syncRes.ok) {
+          console.warn("[useTiers] sync-data API failed:", syncRes.status);
+          return;
+        }
+        updated = await syncRes.json();
+      }
+
+      // ── 최신 티어로 UI 갱신 ──
+      setTierInfoMap((prev) => {
+        const next = { ...prev };
+        const req = sourceRequests.find(
+          (r) =>
+            r.nickname === p.name &&
+            r.server.toString() === p.server,
+        );
+        if (req) {
+          profileCacheRef.current[cacheKey] = updated;
+          const tiers = updated.tiers || {};
+          const powerTier = tiers.recentSpec?.tier || "언랭크";
+          const classTier = tiers.recentGlobal?.tier || "언랭크";
+          next[req.requester] = {
+            combatPowerTier: powerTier,
+            classTier: classTier,
+            isPending: false,
+          };
+        }
+        return next;
+      });
+    } catch (e) {
+      console.error("[useTiers] crawlAndSync exception:", e);
+      // 실패 시 isPending 해제
+      setTierInfoMap((prev) => {
+        const next = { ...prev };
+        const req = sourceRequests.find(
+          (r) => r.nickname === p.name && r.server.toString() === p.server,
+        );
+        if (req && next[req.requester]) {
+          next[req.requester].isPending = false;
+        }
+        return next;
+      });
+    } finally {
+      crawlingRef.current.delete(cacheKey);
+    }
+  }
 
   return tierInfoMap;
 }

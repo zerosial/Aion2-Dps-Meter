@@ -99,6 +99,7 @@ export const JoinRequestPanel = memo(() => {
   const requests = useJoinRequestStore((s) => s.requests);
   const isOpen = useJoinRequestStore((s) => s.isOpen);
   const setOpen = useJoinRequestStore((s) => s.setOpen);
+  const addRequest = useJoinRequestStore((s) => s.addRequest);
   const [skillSettingsOpen, setSkillSettingsOpen] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -202,6 +203,27 @@ export const JoinRequestPanel = memo(() => {
           <div
             className="flex items-center gap-2 h-8"
             onMouseDown={(e) => e.stopPropagation()}>
+            {/* @ts-ignore */}
+            {typeof __IS_LOCAL__ !== "undefined" && __IS_LOCAL__ && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 text-[10px] px-2 bg-black/20"
+                onClick={() => {
+                  addRequest({
+                    requester: Date.now() % 100000,
+                    nickname: "호법제로",
+                    server: 2001,
+                    job: "호법성",
+                    power: 500000,
+                    arrivedAt: Date.now(),
+                    skill: {}
+                  });
+                }}
+              >
+                테스트
+              </Button>
+            )}
             <span className="text-[10px] opacity-50 shrink-0">투명도</span>
             <Slider
               min={0}
@@ -264,7 +286,22 @@ export const JoinRequestPanel = memo(() => {
                 <div
                   key={r.requester}
                   className={`${i == 0 ? "py-0" : "py-2"} px-3`}>
-                  <div className={`${getClassColor(r.job ?? undefined)} p-2 px-3 rounded-lg`}>
+                  <div 
+                    onClick={() => {
+                      const isProd = !!(window as any).javaBridge;
+                      const baseUrl = isProd 
+                        ? (import.meta.env.VITE_CIELUI_BASE_URL || "") 
+                        : "http://localhost:5173";
+                      const url = `${baseUrl}/?server_id=${encodeURIComponent(r.server)}&name=${encodeURIComponent(r.nickname)}`;
+                      
+                      if (isProd && (window as any).javaBridge.openBrowser) {
+                        (window as any).javaBridge.openBrowser(url);
+                      } else {
+                        window.open(url, "_blank");
+                      }
+                    }}
+                    className={`${getClassColor(r.job ?? undefined)} p-2 px-3 rounded-lg cursor-pointer hover:brightness-110 transition-all`}
+                  >
                     <div className="flex items-center gap-1">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <img
@@ -284,10 +321,10 @@ export const JoinRequestPanel = memo(() => {
                           </div>
                         ) : (
                           <>
-                            {tierInfoMap[r.requester].combatPowerTier !== "언랭크" && (
-                              <TierBadge label="4주" tier={tierInfoMap[r.requester].combatPowerTier} />
+                            {tierInfoMap[r.requester].combatPowerTier && (
+                              <TierBadge label="전체" tier={tierInfoMap[r.requester].combatPowerTier} />
                             )}
-                            {tierInfoMap[r.requester].classTier !== "언랭크" && (
+                            {tierInfoMap[r.requester].classTier && (
                               <TierBadge label="2주" tier={tierInfoMap[r.requester].classTier} />
                             )}
                           </>

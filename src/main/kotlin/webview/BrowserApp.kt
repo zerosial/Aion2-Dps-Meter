@@ -82,6 +82,10 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
             }
         }
 
+        fun log(msg: String) {
+            println("[WebView] $msg")
+        }
+
         fun exitApp() {
             Platform.exit()
             exitProcess(0)
@@ -238,6 +242,23 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
                 if (response.statusCode() in 200..299) response.body() else ""
             } catch (e: Exception) {
                 logger.error("Failed to fetch URL: $url", e)
+                ""
+            }
+        }
+
+        fun postUrl(url: String, jsonBody: String): String {
+            return try {
+                val client = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(10)).build()
+                val request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(url))
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                    .header("Content-Type", "application/json")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build()
+                val response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString())
+                if (response.statusCode() in 200..299) response.body() else ""
+            } catch (e: Exception) {
+                logger.error("Failed to POST URL: $url", e)
                 ""
             }
         }
