@@ -120,7 +120,7 @@ class UploadAddonImpl : BattleLogUploader {
                 // Get dps info from report information map
                 val dpsInfo = log.report.information[member.id]
                 val dpsVal = dpsInfo?.dps ?: 0.0
-                val sharePct = (dpsInfo?.contribution ?: 0.0) * 100.0
+                val sharePct = dpsInfo?.contribution ?: 0.0
                 val roundedSharePct = Math.round(sharePct * 10.0) / 10.0
 
                 // Calculate critical rate
