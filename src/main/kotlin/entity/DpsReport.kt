@@ -11,7 +11,7 @@ data class DpsReport(
     val information: HashMap<Int, DpsInformation> = HashMap(),
     var target: MobInfo? = null,
     @Transient var fakeTimeFlag: Boolean = false,
-    @Transient var packets: MutableList<ParsedDamagePacket>? = null
+    @Transient var packets: List<ParsedDamagePacket>? = null
 ) {
     fun target(mobInfo: MobInfo) {
         this.target = mobInfo

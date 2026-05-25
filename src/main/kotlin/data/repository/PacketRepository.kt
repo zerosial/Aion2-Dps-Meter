@@ -1,11 +1,11 @@
 package com.tbread.data.repository
 
 import com.tbread.entity.ParsedDamagePacket
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 
 class PacketRepository {
-    private val storage = ConcurrentHashMap<Int, CopyOnWriteArrayList<ParsedDamagePacket>>()
+    private val storage = ConcurrentHashMap<Int, MutableList<ParsedDamagePacket>>()
     @Volatile
     private var currentTarget = 0
     @Volatile
@@ -14,20 +14,46 @@ class PacketRepository {
     private var currentBattleEnd = 0L
 
     fun save(pdp: ParsedDamagePacket) {
-        storage.computeIfAbsent(pdp.getTargetId()) { CopyOnWriteArrayList() }
-            .add(pdp)
+        val list = storage.computeIfAbsent(pdp.getTargetId()) {
+            Collections.synchronizedList(ArrayList())
+        }
+        synchronized(list) { list.add(pdp) }
     }
 
-    fun get(id: Int): CopyOnWriteArrayList<ParsedDamagePacket>? {
+    fun get(id: Int): MutableList<ParsedDamagePacket>? {
         return storage[id]
     }
 
-    fun getAll(): ConcurrentHashMap<Int, CopyOnWriteArrayList<ParsedDamagePacket>> {
+    /**
+     * Thread-safe snapshot 반환 — DPS 계산 시 사용
+     */
+    fun getSnapshot(id: Int): List<ParsedDamagePacket> {
+        val list = storage[id] ?: return emptyList()
+        return synchronized(list) { ArrayList(list) }
+    }
+
+    fun getAll(): ConcurrentHashMap<Int, MutableList<ParsedDamagePacket>> {
         return storage
+    }
+
+    /**
+     * 모든 값을 flat하게 snapshot으로 반환
+     */
+    fun getAllFlattened(): List<ParsedDamagePacket> {
+        val result = ArrayList<ParsedDamagePacket>()
+        for (list in storage.values) {
+            synchronized(list) { result.addAll(list) }
+        }
+        return result
     }
 
     fun exist(id: Int): Boolean {
         return storage.containsKey(id)
+    }
+
+    fun size(id: Int): Int {
+        val list = storage[id] ?: return 0
+        return synchronized(list) { list.size }
     }
 
     fun flush() {

@@ -9,14 +9,21 @@ class UserRepository {
     // nickname:server 를 키로 사용 — find+remove 를 ConcurrentHashMap.remove() 한 번으로 원자적 처리
     private val subStorage = ConcurrentHashMap<String, User>()
 
+    // Phase 6: 닉네임+서버 → User 보조 인덱스 (O(1) 조회)
+    private val nicknameServerIndex = ConcurrentHashMap<String, User>()
+
     @Volatile
     private var executor: Int = 0
+
+    private fun indexKey(nickname: String?, server: Int) = "$nickname:$server"
 
     fun save(key: Int, value: User): User? {
         val pendingUser = subStorage.remove("${value.nickname}:${value.server}")
         if (pendingUser != null) {
             value.power = pendingUser.power
         }
+        // Phase 6: 보조 인덱스 업데이트
+        nicknameServerIndex[indexKey(value.nickname, value.server)] = value
         return storage.put(key, value)
     }
 
@@ -36,13 +43,15 @@ class UserRepository {
         return storage.containsKey(id)
     }
 
+    // Phase 6: O(n) 순회 → O(1) 인덱스 조회
     fun findByNicknameAndServer(nickname: String, server: Int): User? {
-        return storage.values.find { it.nickname == nickname && it.server == server }
+        return nicknameServerIndex[indexKey(nickname, server)]
     }
 
     fun flush() {
         storage.clear()
         subStorage.clear()
+        nicknameServerIndex.clear()
     }
 
     fun executor(): Int {

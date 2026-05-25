@@ -5,7 +5,7 @@ import com.tbread.entity.*
 import com.tbread.entity.enums.JobClass
 import com.tbread.entity.enums.SpecialDamage
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 class DpsCalculator(private val streamResetCallback: (() -> Unit)? = null) {
     private val logger = LoggerFactory.getLogger(DpsCalculator::class.java)
@@ -23,6 +23,15 @@ class DpsCalculator(private val streamResetCallback: (() -> Unit)? = null) {
     private var cachedBattleStart = 0L
     private var isCachedBattleStartFake = false
 
+    // Phase 3: Dirty flag — 새 데미지 도착 시에만 재계산
+    private val dirty = AtomicBoolean(true)
+
+    fun markDirty() {
+        dirty.set(true)
+    }
+
+    fun isDirty(): Boolean = dirty.get()
+
     private fun resetCache() {
         lastProcessedCount = 0
         cachedInfo.clear()
@@ -30,9 +39,10 @@ class DpsCalculator(private val streamResetCallback: (() -> Unit)? = null) {
         cachedBattleEnd = 0L
         cachedBattleStart = 0L
         isCachedBattleStartFake = false
+        dirty.set(true)
     }
 
-    private fun battleData(): CopyOnWriteArrayList<ParsedDamagePacket>? {
+    private fun battleData(): List<ParsedDamagePacket> {
         return DataManager.battleData(currentTarget)
     }
 
@@ -76,13 +86,14 @@ class DpsCalculator(private val streamResetCallback: (() -> Unit)? = null) {
                 DataManager.saveBattleLog(recentData)
                 recentDataSaved = true
             }
+            dirty.set(false)
             return recentData
         }
 
-        val currentCount = data?.size ?: 0
+        val currentCount = data.size
         if (currentCount > lastProcessedCount) {
             for (i in lastProcessedCount until currentCount) {
-                val packet = data!![i]
+                val packet = data[i]
                 val actor = DataManager.summonerId(packet.getActorId()) ?: packet.getActorId()
                 var user = DataManager.user(actor)
                 if (user == null) {
@@ -148,6 +159,7 @@ class DpsCalculator(private val streamResetCallback: (() -> Unit)? = null) {
 
         recentData = report
         recentDataSaved = false
+        dirty.set(false)
         return report
     }
 

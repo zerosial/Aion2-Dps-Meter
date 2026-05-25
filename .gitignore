@@ -60,3 +60,5 @@ bin/
 .env
 *.env
 
+# Ignore sample folder
+sample/

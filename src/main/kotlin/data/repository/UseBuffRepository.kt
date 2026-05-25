@@ -1,19 +1,23 @@
 package com.tbread.data.repository
 
 import com.tbread.entity.UseBuff
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 
 class UseBuffRepository {
-    private val storage = ConcurrentHashMap<Int, CopyOnWriteArrayList<UseBuff>>()
+    private val storage = ConcurrentHashMap<Int, MutableList<UseBuff>>()
 
     fun save(id: Int, useBuff: UseBuff) {
-        storage.computeIfAbsent(id) { CopyOnWriteArrayList() }.add(useBuff)
+        val list = storage.computeIfAbsent(id) { Collections.synchronizedList(ArrayList()) }
+        synchronized(list) { list.add(useBuff) }
     }
 
     fun findOverlapping(id: Int, timestamp1: Long, timestamp2: Long): List<UseBuff> {
-        return storage[id]?.filter { buff ->
-            buff.buffStart <= timestamp2 && buff.buffEnd >= timestamp1
-        } ?: emptyList()
+        val list = storage[id] ?: return emptyList()
+        return synchronized(list) {
+            list.filter { buff ->
+                buff.buffStart <= timestamp2 && buff.buffEnd >= timestamp1
+            }
+        }
     }
 }

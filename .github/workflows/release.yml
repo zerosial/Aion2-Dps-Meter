@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
 
 permissions:
   contents: write
@@ -54,6 +55,8 @@ jobs:
 
     - name: Build MSI Installer
       shell: pwsh
+      env:
+        GITHUB_REF: ${{ github.ref }}
       run: |
         .\gradlew.bat packageMsi --no-daemon --info
 
@@ -75,10 +78,10 @@ jobs:
       with:
         files: |
           build/compose/binaries/main/msi/aion2meter4j-${{ steps.get_version.outputs.version }}.msi
-        tag_name: v${{ steps.get_version.outputs.version }}
-        name: Release v${{ steps.get_version.outputs.version }}
-        body: "랭크조회 오류 수정"
+        tag_name: v${{ steps.get_version.outputs.version }}${{ github.ref == 'refs/heads/dev' && '-dev' || '' }}
+        name: Release v${{ steps.get_version.outputs.version }}${{ github.ref == 'refs/heads/dev' && '-dev' || '' }}
+        body: "성능 및 리팩토링 최적화 프리 릴리즈"
         draft: false
-        prerelease: false
+        prerelease: ${{ github.ref == 'refs/heads/dev' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

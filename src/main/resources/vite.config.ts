@@ -9,7 +9,7 @@ import path from "path";
 export default defineConfig({
   plugins: [react(), babel({ presets: [reactCompilerPreset()] }), viteSingleFile(), tailwindcss()],
   define: {
-    '__IS_LOCAL__': process.env.CI !== 'true'
+    '__IS_LOCAL__': process.env.CI !== 'true' || process.env.GITHUB_REF === 'refs/heads/dev'
   },
   resolve: {
     alias: {

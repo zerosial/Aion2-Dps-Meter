@@ -3,7 +3,7 @@ package com.tbread.data.repository
 data class MobInstance(val code: Int, var maxHp: Int = 0)
 
 class MobIdRepository {
-    private val storage = HashMap<Int, MobInstance>()
+    private val storage = java.util.concurrent.ConcurrentHashMap<Int, MobInstance>()
 
     fun save(key: Int, code: Int): MobInstance? {
         return storage.put(key, MobInstance(code))

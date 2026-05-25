@@ -136,3 +136,9 @@ tasks.withType<JavaCompile>().configureEach {
     targetCompatibility = "21"
 }
 
+tasks.register<JavaExec>("runBenchmark") {
+    dependsOn("compileKotlin")
+    mainClass.set("com.tbread.test.ConcurrencyBenchmarkKt")
+    classpath = sourceSets["main"].runtimeClasspath
+}
+
