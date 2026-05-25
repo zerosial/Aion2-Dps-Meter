@@ -6,13 +6,18 @@ import com.tbread.addon.UploadManager
 import kotlinx.serialization.json.*
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
 
 object DataManager {
     private val logger = LoggerFactory.getLogger(DataManager::class.java)
 
     private val resetEpoch = AtomicLong(0)
+
+    // Phase 3: 변경 알림 콜백 (DpsCalculator.markDirty 연결용)
+    @Volatile
+    private var onChangeCallback: (() -> Unit)? = null
+    fun setOnChangeCallback(callback: () -> Unit) { onChangeCallback = callback }
+    private fun notifyChange() { onChangeCallback?.invoke() }
 
     fun currentEpoch(): Long = resetEpoch.get()
 
@@ -174,13 +179,17 @@ object DataManager {
     /*
     packet 영역
      */
-    fun battleData(targetId: Int): CopyOnWriteArrayList<ParsedDamagePacket>? {
+    fun battleData(targetId: Int): List<ParsedDamagePacket> {
         if (packetRepository.currentTarget() == 0) {
-            return CopyOnWriteArrayList(packetRepository.getAll().values.flatten().filter {
+            return packetRepository.getAllFlattened().filter {
                 !existMobId(it.getTargetId())
-            })
+            }
         }
-        return packetRepository.get(targetId)
+        return packetRepository.getSnapshot(targetId)
+    }
+
+    fun packetCount(targetId: Int): Int {
+        return packetRepository.size(targetId)
     }
 
     fun currentTarget(): Int {
@@ -223,20 +232,21 @@ object DataManager {
     fun startBattle(mobId: Int) {
         if (currentTarget() == mobId) {
             val now = System.currentTimeMillis()
-            val preemptivePackets = packetRepository.get(mobId)
-                ?.filter { it.getTimeStamp() >= now - 1000L }
-                ?.toList()
+            val preemptivePackets = packetRepository.getSnapshot(mobId)
+                .filter { it.getTimeStamp() >= now - 1000L }
             flushPacket()
-            preemptivePackets?.forEach { packetRepository.save(it) }
+            preemptivePackets.forEach { packetRepository.save(it) }
         }
         saveCurrentBattleStart()
         saveCurrentTarget(mobId)
+        notifyChange()
     }
 
     fun endBattle(mobId: Int) {
         if (currentTarget() != mobId) return
         saveCurrentBattleEnd()
         saveCurrentTarget(-1)
+        notifyChange()
     }
 
     fun currentBattleStart(): Long {
@@ -271,6 +281,7 @@ object DataManager {
     fun saveDamage(pdp: ParsedDamagePacket, epoch: Long) {
         if (resetEpoch.get() != epoch) return
         packetRepository.save(pdp)
+        notifyChange()
     }
 
 

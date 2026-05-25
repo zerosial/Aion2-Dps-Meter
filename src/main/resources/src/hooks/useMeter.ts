@@ -3,7 +3,9 @@ import type { Player } from "@/types";
 import { parseCombatData } from "../utils/parser";
 // import { useDebugStore } from "../stores/debugStore";
 
-const POLL_MS = 300;
+// Phase 5: Adaptive polling — 전투 중 300ms, 비전투 시 1000ms
+const POLL_COMBAT_MS = 300;
+const POLL_IDLE_MS = 1000;
 
 interface MeterSnapshot {
   players: Player[];
@@ -222,14 +224,22 @@ export const useMeter = () => {
   }, [setSnapshotIfChanged]);
 
   useEffect(() => {
-    if (!pollTimerRef.current) {
-      pollTimerRef.current = setInterval(fetchDps, POLL_MS);
-    }
+    // Phase 5: adaptive polling — 전투 상태에 따라 간격 조절
+    const getInterval = () => isInCombatRef.current ? POLL_COMBAT_MS : POLL_IDLE_MS;
+
+    const scheduleNext = () => {
+      pollTimerRef.current = setTimeout(() => {
+        fetchDps();
+        scheduleNext();
+      }, getInterval());
+    };
+
     fetchDps();
+    scheduleNext();
 
     return () => {
       if (pollTimerRef.current) {
-        clearInterval(pollTimerRef.current);
+        clearTimeout(pollTimerRef.current);
         pollTimerRef.current = null;
       }
       if (combatTimerRef.current) {

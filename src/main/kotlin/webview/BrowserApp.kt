@@ -390,6 +390,10 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         CoroutineScope(Dispatchers.IO).launch {
             while (true) {
                 kotlinx.coroutines.delay(500)
+                // Phase 3: dirty flag 기반 갱신 — 새 데이터가 없으면 직렬화 스킵
+                if (!dpsCalculator.isDirty()) {
+                    continue
+                }
                 val data = dpsCalculator.getDps()
                 cachedDpsJson = Json.encodeToString(data)
                 dpsData = data
@@ -398,14 +402,14 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
 
         CoroutineScope(Dispatchers.IO).launch {
             while (true) {
-                kotlinx.coroutines.delay(300)
+                kotlinx.coroutines.delay(500)  // Phase 3: 300ms → 500ms
                 if (!isVisible) continue
                 if (!isAutoHide) {
                     Platform.runLater { stage.opacity = 1.0 }
                     continue
                 }
 
-                val aionFocused = isAion2Focused()
+                val aionFocused = isAion2FocusedCached()
                 if (!aionEverFocused) {
                     if (aionFocused) aionEverFocused = true
                     else continue
@@ -424,6 +428,19 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         val pidRef = com.sun.jna.ptr.IntByReference()
         User32.INSTANCE.GetWindowThreadProcessId(hwnd, pidRef)
         return pidRef.value.toLong() == ProcessHandle.current().pid()
+    }
+
+    // Phase 3: isAion2Focused 결과 캐시 (1초)
+    @Volatile private var cachedAion2Focused = false
+    @Volatile private var cachedAion2FocusedTime = 0L
+    private val AION2_FOCUS_CACHE_MS = 1000L
+
+    private fun isAion2FocusedCached(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - cachedAion2FocusedTime < AION2_FOCUS_CACHE_MS) return cachedAion2Focused
+        cachedAion2Focused = isAion2Focused()
+        cachedAion2FocusedTime = now
+        return cachedAion2Focused
     }
 
     private fun isAion2Focused(): Boolean {

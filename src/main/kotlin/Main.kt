@@ -21,7 +21,7 @@ fun main() = runBlocking {
 
     DataManager.load()
 
-    val channel = Channel<CapturedPacket>(Channel.UNLIMITED)
+    val channel = Channel<CapturedPacket>(4096)
     val pcapConfig = PcapCapturerConfig.loadFromProperties()
     val versionConfig = VersionConfig.loadFromProperties()
 
@@ -34,6 +34,9 @@ fun main() = runBlocking {
         assembler.flush()
         alignmenter.reset()
     }
+
+    // Phase 3: DataManager 변경 시 DpsCalculator dirty flag 설정
+    DataManager.setOnChangeCallback { calculator.markDirty() }
 
     launch(Dispatchers.Default) {
         var currentIp = ""

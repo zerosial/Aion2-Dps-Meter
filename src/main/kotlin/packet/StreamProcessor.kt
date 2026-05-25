@@ -64,11 +64,10 @@ class StreamProcessor() {
     fun onPacketReceived(packet: ByteArray, arrivedAt: Long) {
         if (packet.size == 3) return
 
-        OdeGroupParser.parseOdeGroupPacket(packet, arrivedAt, this)
-
-        PacketLogger.logPacket(packet, arrivedAt)
-
-//        DataManager.saveRawPacket(packet, arrivedAt)
+        // Phase 4: OdeGroup 패킷은 최소 100바이트 이상이므로 사전 필터링
+        if (packet.size >= 100) {
+            OdeGroupParser.parseOdeGroupPacket(packet, arrivedAt, this)
+        }
 
         val epoch = DataManager.currentEpoch()
 
@@ -91,6 +90,9 @@ class StreamProcessor() {
 
         val opcodeKey = (packet[opcodeOffset].toInt() and 0xFF) or ((packet[opcodeOffset + 1].toInt() and 0xFF) shl 8)
         handlers[opcodeKey]?.invoke(packet, lengthInfo, extraFlag, epoch, arrivedAt)
+
+        // Phase 1: PacketLogger를 핵심 처리 경로 이후로 이동
+        PacketLogger.logPacket(packet, arrivedAt)
     }
 
     private fun decompressPacket(

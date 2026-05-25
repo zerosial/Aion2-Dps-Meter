@@ -2,13 +2,17 @@ package com.tbread.packet
 
 import com.tbread.data.DungeonDataManager
 import com.tbread.entity.OdeGroupData
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 object OdeGroupParser {
     private val logger = LoggerFactory.getLogger(OdeGroupParser::class.java)
+
+    // Phase 4: structured coroutine scope (GlobalScope 대체)
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     data class GroupSpec(val id: Int, val name: String, val max1: Int, val max2: Int, val used: Boolean)
     data class ParsedGroupValue(val id: Int, val values: List<Int>, val sum: Int, val suffixSize: Int)
@@ -30,7 +34,18 @@ object OdeGroupParser {
 
     private val possibleSuffixBytes = setOf<Byte>(0x04, 0x08, 0x0C)
 
+    // Phase 4: 첫 번째 header만 먼저 체크하여 빠른 탈출
+    private val firstHeader = odeGroupHeaders[1]!!
+
+    // Phase 4: 캐릭터명 캐시 (윈도우 타이틀은 자주 변경되지 않음)
+    @Volatile private var cachedCharName: String = ""
+    @Volatile private var cachedCharNameTime: Long = 0L
+    private const val CHAR_NAME_CACHE_MS = 10_000L  // 10초 캐시
+
     fun parseOdeGroupPacket(packet: ByteArray, arrivedAt: Long, processor: StreamProcessor) {
+        // Phase 4: 첫 번째 header를 먼저 확인 — 대부분의 패킷이 여기서 return
+        if (findArrayIndex(packet, firstHeader) == -1) return
+
         val groupOffsets = mutableMapOf<Int, Int>()
         for (id in 1..8) {
             val header = odeGroupHeaders[id]!!
@@ -96,14 +111,29 @@ object OdeGroupParser {
 
         logger.info("[던전] 오드=\${data.ode} 초월=\${data.transcend} 던전=\${data.dungeon} 던전보스=\${data.dungeonBoss} 초월보스=\${data.transcendBoss}")
 
-        GlobalScope.launch {
+        // Phase 4: GlobalScope → structured scope
+        scope.launch {
             delay(1000)
-            val name = extractCharacterNameFromWindow()
+            val name = getCachedCharacterName()
             if (name.isNotBlank()) {
                 logger.info("[던전] 캐릭터명 감지: \$name")
             }
             DungeonDataManager.updateFromPacket(data, name)
         }
+    }
+
+    // Phase 4: 캐릭터명 캐시 적용
+    private fun getCachedCharacterName(): String {
+        val now = System.currentTimeMillis()
+        if (now - cachedCharNameTime < CHAR_NAME_CACHE_MS && cachedCharName.isNotBlank()) {
+            return cachedCharName
+        }
+        val name = extractCharacterNameFromWindow()
+        if (name.isNotBlank()) {
+            cachedCharName = name
+            cachedCharNameTime = now
+        }
+        return name
     }
 
     private fun parseOdeGroupBody(id: Int, spec: GroupSpec, body: ByteArray, processor: StreamProcessor): ParsedGroupValue? {
