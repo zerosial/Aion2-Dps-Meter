@@ -100,6 +100,7 @@ export const JoinRequestPanel = memo(() => {
   const isOpen = useJoinRequestStore((s) => s.isOpen);
   const setOpen = useJoinRequestStore((s) => s.setOpen);
   const addRequest = useJoinRequestStore((s) => s.addRequest);
+  const removeRequest = useJoinRequestStore((s) => s.removeRequest);
   const [skillSettingsOpen, setSkillSettingsOpen] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -314,7 +315,7 @@ export const JoinRequestPanel = memo(() => {
                           {getServerLabel(r.server) ? `[${getServerLabel(r.server)}]` : ""}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         {!tierInfoMap[r.requester] || tierInfoMap[r.requester].isPending ? (
                           <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-white/10 bg-black/20">
                             <span className="text-[10px] text-white/50 animate-pulse">조회중...</span>
@@ -329,9 +330,19 @@ export const JoinRequestPanel = memo(() => {
                             )}
                           </>
                         )}
-                        <span className="text-shadow-meter text-sm tabular-nums text-[#10f1e2] shrink-0 ml-1">
+                        <span className="text-shadow-meter text-sm tabular-nums text-[#10f1e2] shrink-0 ml-1 mr-1">
                           {`${(r.power / 1000).toFixed(1)}k`}
                         </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRequest(r.requester);
+                          }}
+                          className="p-0.5 rounded-full text-white/40 hover:text-red-400 hover:bg-white/15 transition-colors"
+                          title="삭제"
+                        >
+                          <CircleX className="size-4" />
+                        </button>
                       </div>
                     </div>
 

@@ -41,6 +41,7 @@ class StreamProcessor() {
         object RefuseJoin    : Opcode(0x09, 0x97)
         object InstanceStart : Opcode(0x18, 0x97)
         object ExitParty     : Opcode(0x1D, 0x97)
+        object CharacterLookup : Opcode(0x4F, 0x36)
     }
 
     private val handlers: Map<Int, (ByteArray, VarIntOutput, Boolean, Long, Long) -> Unit> = mapOf(
@@ -59,6 +60,7 @@ class StreamProcessor() {
         Opcode.RefuseJoin.key    to { packet, lengthInfo, extraFlag, _, _            -> parseRefuseJoinRequest(packet, lengthInfo, extraFlag) },
         Opcode.InstanceStart.key to { packet, lengthInfo, extraFlag, _, _            -> parseInstanceStartPacket(packet, lengthInfo, extraFlag) },
         Opcode.ExitParty.key     to { packet, lengthInfo, extraFlag, _, _            -> parseExitParty(packet, lengthInfo, extraFlag) },
+        Opcode.CharacterLookup.key to { packet, lengthInfo, extraFlag, _, arrivedAt    -> parseCharacterLookup(packet, lengthInfo, extraFlag, arrivedAt) }
     )
 
     fun onPacketReceived(packet: ByteArray, arrivedAt: Long) {
@@ -823,6 +825,91 @@ class StreamProcessor() {
         }
         user.power = power
         return true
+    }
+
+    private fun parseCharacterLookup(
+        packet: ByteArray,
+        lengthInfo: VarIntOutput,
+        extraFlag: Boolean,
+        arrivedAt: Long
+    ): Boolean {
+        try {
+            var offset = lengthInfo.length
+            if (extraFlag) {
+                offset++
+            }
+            if (packet.size < offset + 2) return false
+
+            if (packet[offset] != 0x4F.toByte()) return false
+            if (packet[offset + 1] != 0x36.toByte()) return false
+
+            var p = offset + 4
+            if (p >= packet.size || packet[p] != 7.toByte()) return false
+            p++
+
+            val nameLenInfo = readVarInt(packet, p)
+            if (nameLenInfo.length <= 0) return false
+            p += nameLenInfo.length
+
+            if (nameLenInfo.value < 1 || nameLenInfo.value > 72 || p + nameLenInfo.value > packet.size) return false
+
+            val nameBytes = packet.copyOfRange(p, p + nameLenInfo.value)
+            val name = String(nameBytes, Charsets.UTF_8)
+            p += nameLenInfo.value
+
+            if (p + 20 > packet.size) return false
+            val jobCode = packet[p].toInt() and 0xFF
+            p++
+            p += 3
+            p++
+            p++
+            val level = packet[p].toInt() and 0xFF
+            p++
+            p += 7
+
+            val entityId = (packet[p].toInt() and 0xFF) or
+                           ((packet[p + 1].toInt() and 0xFF) shl 8) or
+                           ((packet[p + 2].toInt() and 0xFF) shl 16) or
+                           ((packet[p + 3].toInt() and 0xFF) shl 24)
+            p += 4
+
+            val serverId = (packet[p].toInt() and 0xFF) or
+                           ((packet[p + 1].toInt() and 0xFF) shl 8)
+            p += 2
+
+            var combatPower = 0
+            val cpPos = packet.size - 9
+            if (cpPos > p && cpPos + 5 <= packet.size && packet[cpPos] == 0x14.toByte()) {
+                combatPower = (packet[cpPos + 1].toInt() and 0xFF) or
+                              ((packet[cpPos + 2].toInt() and 0xFF) shl 8) or
+                              ((packet[cpPos + 3].toInt() and 0xFF) shl 16) or
+                              ((packet[cpPos + 4].toInt() and 0xFF) shl 24)
+            }
+
+            val realClass = JobClass.convertFromCode(jobCode)
+            val request = PacketAddonManager.processingUser(
+                JoinRequestUser(
+                    name,
+                    combatPower,
+                    realClass?.className,
+                    serverId,
+                    entityId,
+                    arrivedAt
+                )
+            )
+            println("[정보보기] 닉네임: $name 전투력: $combatPower 직업:${realClass?.className} 서버:$serverId 엔티티:$entityId 레벨:$level")
+            PacketEventBus.events.tryEmit(PacketEvent.JoinRequest(request))
+
+            val user = DataManager.findUserByNicknameAndServer(name, serverId)
+            if (user == null) {
+                DataManager.saveUser(User(-1, name, serverId, power = combatPower))
+            } else {
+                user.power = combatPower
+            }
+            return true
+        } catch (_: Exception) {
+            return false
+        }
     }
 
     private fun parseCancelJoinRequest(packet: ByteArray, lengthInfo: VarIntOutput, extraFlag: Boolean): Boolean {
