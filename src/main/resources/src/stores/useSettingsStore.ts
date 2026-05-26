@@ -146,6 +146,8 @@ interface SettingsState {
   uiY: number;
   resetMeterPosition: () => void;
   setUiPosition: (x: number, y: number) => void;
+  captureMode: "NPCAP" | "WINDIVERT";
+  setCaptureMode: (v: "NPCAP" | "WINDIVERT") => void;
 }
 
 const jb = () => (window as any).javaBridge;
@@ -181,6 +183,7 @@ const defaultSettings = {
   clickThroughHotkey: { modifiers: 2, vkCode: 0x54 },
   isClickThrough: false,
   isAutoHide: true,
+  captureMode: "WINDIVERT" as const,
   joinPanelWidth: 400,
   joinPanelHeight: 330,
   joinPanelX: 0,
@@ -291,6 +294,7 @@ export const useSettingsStore = create<SettingsState>((set) => {
       clickThroughHotkey: parsedClickThroughHotkey ?? defaultSettings.clickThroughHotkey,
       isClickThrough: j.isClickThrough?.() ?? false,
       isAutoHide: j.isAutoHide?.() ?? false,
+      captureMode: (j.loadProps?.("captureMode") as any) ?? defaultSettings.captureMode,
       joinPanelWidth: Number(j.loadProps?.("joinPanelWidth")) || defaultSettings.joinPanelWidth,
       joinPanelHeight: Number(j.loadProps?.("joinPanelHeight")) || defaultSettings.joinPanelHeight,
       joinPanelX: hasSavedJoinPanelX ? Number(savedJoinPanelXRaw) : defaultSettings.joinPanelX,
@@ -350,6 +354,7 @@ export const useSettingsStore = create<SettingsState>((set) => {
     isClickThrough: defaultSettings.isClickThrough,
     isAutoHide: defaultSettings.isAutoHide,
     isLoaded: defaultSettings.isLoaded,
+    captureMode: defaultSettings.captureMode,
 
     joinPanelWidth: defaultSettings.joinPanelWidth,
     joinPanelHeight: defaultSettings.joinPanelHeight,
@@ -569,6 +574,10 @@ export const useSettingsStore = create<SettingsState>((set) => {
       set({ uiX, uiY });
       jb()?.saveProps?.("uiX", String(uiX));
       jb()?.saveProps?.("uiY", String(uiY));
+    },
+    setCaptureMode: (captureMode) => {
+      set({ captureMode });
+      jb()?.saveProps?.("captureMode", captureMode);
     },
   };
 });

@@ -62,3 +62,12 @@ bin/
 
 # Ignore sample folder
 sample/
+
+# Ignore scratch files & native WinDivert binaries
+scratch_ingmeter/
+WinDivert.dll
+WinDivert64.sys
+
+# Ignore Local Developer Standard Guide
+DEVELOPER_GUIDE.md
+

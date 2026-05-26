@@ -29,7 +29,11 @@ fun main() = runBlocking {
     val processor = StreamProcessor()
     val alignmenter = PacketAlignmenter()
     val assembler = StreamAssembler(processor)
-    val capturer = PcapCapturer(pcapConfig, channel)
+    
+    val captureMode = pcapConfig.captureMode
+    val capturer = if (captureMode != "WINDIVERT") PcapCapturer(pcapConfig, channel) else null
+    val divertCapturer = if (captureMode == "WINDIVERT") WinDivertCapturer(pcapConfig, channel) else null
+
     val calculator = DpsCalculator {
         assembler.flush()
         alignmenter.reset()
@@ -53,7 +57,13 @@ fun main() = runBlocking {
     }
 
     launch(Dispatchers.IO) {
-        capturer.start()
+        if (divertCapturer != null) {
+            println("[CAPTURED] Starting WinDivert Kernel-level Capture Mode...")
+            divertCapturer.start()
+        } else {
+            println("[CAPTURED] Starting Npcap Packet Sniffing Capture Mode...")
+            capturer?.start()
+        }
     }
 
     launch {

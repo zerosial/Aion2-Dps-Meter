@@ -6,7 +6,8 @@ data class PcapCapturerConfig(
     val serverIp: String,
     val serverPort: String,
     val timeout: Int = 10,
-    val snapshotSize: Int = 65536
+    val snapshotSize: Int = 65536,
+    val captureMode: String = "WINDIVERT"
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(javaClass.enclosingClass)
@@ -15,9 +16,10 @@ data class PcapCapturerConfig(
             val port = PropertyHandler.getProperty("server.port") ?: "13328"
             val timeout = PropertyHandler.getProperty("server.timeout")?.toInt() ?: 10
             val snapSize = PropertyHandler.getProperty("server.maxSnapshotSize")?.toInt() ?: 65536
-            logger.debug("{},{},{},{}", ip, port, timeout, snapSize)
-            logger.info("프로퍼티스 초기화 완료")
-            return PcapCapturerConfig(ip, port, timeout, snapSize)
+            val mode = PropertyHandler.getProperty("capture.mode")?.uppercase() ?: "WINDIVERT"
+            logger.debug("{},{},{},{},{}", ip, port, timeout, snapSize, mode)
+            logger.info("프로퍼티스 초기화 완료 (모드: $mode)")
+            return PcapCapturerConfig(ip, port, timeout, snapSize, mode)
         }
     }
 }

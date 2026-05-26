@@ -354,6 +354,17 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
         stage.isAlwaysOnTop = true
         stage.title = "Aion2 Dps Overlay"
 
+        // 신규로 이식한 aion2cal.png 아이콘을 JavaFX Stage 창 아이콘으로 적용
+        val iconUrl = javaClass.getResource("/src/assets/logo.png")
+        if (iconUrl != null) {
+            try {
+                stage.icons.add(javafx.scene.image.Image(iconUrl.toExternalForm()))
+                logger.info("JavaFX 창 아이콘 로드 성공")
+            } catch (e: Exception) {
+                logger.warn("JavaFX 창 아이콘 로드 중 예외 발생", e)
+            }
+        }
+
         stage.show()
         applyOverlayWindowStyle(stage.title)
 

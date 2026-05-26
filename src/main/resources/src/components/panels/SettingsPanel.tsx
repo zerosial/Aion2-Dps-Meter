@@ -123,6 +123,7 @@ export const SettingsPanel = ({
     clickThroughHotkey,
     isClickThrough,
     isAutoHide,
+    captureMode,
   } = useSettingsStore(
     useShallow((s) => ({
       hideHotkey: s.hideHotkey,
@@ -142,6 +143,7 @@ export const SettingsPanel = ({
       clickThroughHotkey: s.clickThroughHotkey,
       isClickThrough: s.isClickThrough,
       isAutoHide: s.isAutoHide,
+      captureMode: s.captureMode,
     })),
   );
 
@@ -167,6 +169,7 @@ export const SettingsPanel = ({
     resetJoinPanelPosition,
     resetSidePanelPosition,
     resetMeterPosition,
+    setCaptureMode,
   } = useSettingsStore.getState();
   const {
     pending: pendingHide,
@@ -196,6 +199,7 @@ export const SettingsPanel = ({
     meterListOpacity,
     contributionMode,
     clickThroughHotkey,
+    captureMode,
     theme: structuredClone(theme),
   }));
 
@@ -225,6 +229,7 @@ export const SettingsPanel = ({
     setMeterListOpacity(snapshot.meterListOpacity);
     setContributionMode(snapshot.contributionMode);
     resetClickThrough(snapshot.clickThroughHotkey);
+    setCaptureMode(snapshot.captureMode as any);
     onClose();
   }, [
     onClose,
@@ -243,6 +248,7 @@ export const SettingsPanel = ({
     setShowTargetInfoInMinimal,
     setTheme,
     setTargetInfoDisplayMode,
+    setCaptureMode,
     snapshot,
   ]);
 
@@ -308,6 +314,34 @@ export const SettingsPanel = ({
                     {label}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </SettingsRow>
+        </SettingsItem>
+
+        <SettingsItem>
+          <SettingsRow
+            title="패킷 캡처 방식"
+            description="인터셉트 방식을 선택합니다 (변경 후 미터기 재시작 권장)"
+            align="center"
+            rightClassName="w-44">
+            <Select
+              value={captureMode}
+              onValueChange={(v) => setCaptureMode(v as any)}>
+              <SelectTrigger className="w-44 bg-white/5 border-white/10 text-sm font-semibold">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  value="NPCAP"
+                  className="px-4 py-2 font-medium">
+                  Npcap 방식 (기존 Sniffing)
+                </SelectItem>
+                <SelectItem
+                  value="WINDIVERT"
+                  className="px-4 py-2 font-medium text-purple-400">
+                  WinDivert 방식 (커널 랙 제어)
+                </SelectItem>
               </SelectContent>
             </Select>
           </SettingsRow>
