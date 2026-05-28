@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
 
 permissions:
   contents: write
@@ -75,10 +76,10 @@ jobs:
       with:
         files: |
           build/compose/binaries/main/msi/aion2meter4j-${{ steps.get_version.outputs.version }}.msi
-        tag_name: v${{ steps.get_version.outputs.version }}
-        name: Release v${{ steps.get_version.outputs.version }}
-        body: "랭크조회 오류 수정"
+        tag_name: v${{ steps.get_version.outputs.version }}${{ github.ref == 'refs/heads/dev' && '-dev' || '' }}
+        name: Release v${{ steps.get_version.outputs.version }}${{ github.ref == 'refs/heads/dev' && '-dev' || '' }}
+        body_path: RELEASE_NOTES.md
         draft: false
-        prerelease: false
+        prerelease: ${{ github.ref == 'refs/heads/dev' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

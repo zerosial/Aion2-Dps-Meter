@@ -11,7 +11,8 @@ export type Tier =
   | "실버"
   | "브론즈"
   | "아이언"
-  | "언랭크";
+  | "언랭크"
+  | "미공개";
 
 interface TierBadgeProps {
   label: string;
@@ -31,6 +32,8 @@ const tierConfig: Record<Tier, { color: string; bg: string; anim?: string; borde
   "브론즈": { color: "#b45309", bg: "rgba(180, 83, 9, 0.15)", border: "rgba(180, 83, 9, 0.3)" },
   "아이언": { color: "#78716c", bg: "rgba(120, 113, 108, 0.15)", border: "rgba(120, 113, 108, 0.3)" },
   "언랭크": { color: "#94a3b8", bg: "rgba(148, 163, 184, 0.12)", border: "rgba(148, 163, 184, 0.3)" },
+  // 서버에서 비공개로 표시된 캐릭터용 뱃지. 채도 낮은 슬레이트 톤으로 시각적 강조 최소화.
+  "미공개": { color: "#cbd5e1", bg: "rgba(100, 116, 139, 0.18)", border: "rgba(148, 163, 184, 0.4)" },
 };
 
 function getShortTierName(tier: string) {
@@ -38,6 +41,7 @@ function getShortTierName(tier: string) {
   if (tier === "다이아몬드") return "다이아";
   if (tier === "에메랄드") return "에메";
   if (tier === "플래티넘") return "플래";
+  if (tier === "미공개") return "비공개";
   return tier;
 }
 
