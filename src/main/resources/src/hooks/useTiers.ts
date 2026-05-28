@@ -31,6 +31,8 @@ export interface ProfileTierInfo {
   allTimeSpecTier: Tier;
   recentSpecTier: Tier;
   isPending?: boolean;
+  // Server-side privacy flag; when true the tier slots come back as "미공개" and we skip the aion.ing crawl.
+  isPrivate?: boolean;
 }
 
 export function useTiers(requests: JoinRequestUser[]) {
@@ -85,14 +87,15 @@ export function useTiers(requests: JoinRequestUser[]) {
                 profile;
 
               const tiers = profile.tiers || {};
-              const allTimeSpecTier = tiers.allTimeSpec?.tier || "언랭크";
-              const recentSpecTier = tiers.recentSpec?.tier || "언랭크";
+              const allTimeSpecTier = (tiers.allTimeSpec?.tier || "언랭크") as Tier;
+              const recentSpecTier = (tiers.recentSpec?.tier || "언랭크") as Tier;
 
               next[req.requester] = {
                 allTimeSpecTier,
                 recentSpecTier,
-                // isStale인 경우 갱신 진행 중임을 표시
-                isPending: profile.isStale,
+                // isStale인 경우 갱신 진행 중임을 표시 (단, 비공개 캐릭터는 갱신 불필요)
+                isPending: !profile.isPrivate && profile.isStale,
+                isPrivate: !!profile.isPrivate,
               };
             }
           });
@@ -100,7 +103,8 @@ export function useTiers(requests: JoinRequestUser[]) {
         });
 
         // ── 3단계: isStale인 캐릭터를 병렬 크롤링 후 최신화 ──
-        const staleProfiles = profiles.filter((p) => p.isStale);
+        //   비공개 캐릭터는 서버에서 차단되므로 크롤링하지 않는다.
+        const staleProfiles = profiles.filter((p) => p.isStale && !p.isPrivate);
         if (staleProfiles.length > 0) {
           // 청크 단위로 나눠서 순차 처리 (각 청크 내부는 병렬)
           (async () => {

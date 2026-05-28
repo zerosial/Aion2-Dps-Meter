@@ -80,7 +80,7 @@ jobs:
           build/compose/binaries/main/msi/aion2meter4j-${{ steps.get_version.outputs.version }}.msi
         tag_name: v${{ steps.get_version.outputs.version }}${{ github.ref == 'refs/heads/dev' && '-dev' || '' }}
         name: Release v${{ steps.get_version.outputs.version }}${{ github.ref == 'refs/heads/dev' && '-dev' || '' }}
-        body: "성능 및 리팩토링 최적화 프리 릴리즈"
+        body_path: RELEASE_NOTES.md
         draft: false
         prerelease: ${{ github.ref == 'refs/heads/dev' }}
       env:
