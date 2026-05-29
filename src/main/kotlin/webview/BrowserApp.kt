@@ -144,12 +144,68 @@ class BrowserApp(private val config: VersionConfig, private val dpsCalculator: D
             com.tbread.packet.PacketLogger.startRecording()
         }
 
-        fun stopPacketRecording() {
-            com.tbread.packet.PacketLogger.stopRecording()
+        /**
+         * Stop recording AND immediately upload the resulting hex log to the
+         * cielui admin endpoint on a background thread. Returns a JSON
+         * envelope with the recording stats so the UI can toast the result.
+         * Upload runs detached — the UI doesn't block on the network.
+         */
+        fun stopPacketRecording(): String {
+            val result = com.tbread.packet.PacketLogger.stopRecording()
+                ?: return "{\"recorded\":false}"
+
+            // Resolve uploader identity from the live DPS calculator. If the
+            // exec/me user isn't known yet we still upload with placeholders
+            // so test sessions are never lost.
+            val (selfName, selfServerName) = try {
+                val report = dpsCalculator.getLiveReport()
+                val me = report.contributors.firstOrNull { it.isExecutor }
+                    ?: report.contributors.firstOrNull()
+                val name = me?.nickname ?: "unknown"
+                val srv = me?.let { com.tbread.util.ServerMap.getName(it.server) } ?: "unknown"
+                name to srv
+            } catch (_: Throwable) {
+                "unknown" to "unknown"
+            }
+            val meterVersion = com.tbread.config.VersionConfig.loadFromProperties().version
+
+            Thread {
+                try {
+                    val out = com.tbread.addon.PacketRecordingUploader.upload(
+                        result,
+                        uploaderName = selfName,
+                        uploaderServer = selfServerName,
+                        meterVersion = meterVersion,
+                    )
+                    if (out.success) {
+                        // optional: delete local file after successful upload
+                        try { java.io.File(result.filePath).delete() } catch (_: Throwable) {}
+                    }
+                } catch (e: Exception) {
+                    log("녹화 업로드 예외: ${e.message}")
+                }
+            }.apply { isDaemon = true; name = "packet-recording-uploader" }.start()
+
+            return kotlinx.serialization.json.buildJsonObject {
+                put("recorded", kotlinx.serialization.json.JsonPrimitive(true))
+                put("packetCount", kotlinx.serialization.json.JsonPrimitive(result.packetCount))
+                put("durationMs", kotlinx.serialization.json.JsonPrimitive(result.durationMs))
+                put("fileSize", kotlinx.serialization.json.JsonPrimitive(result.fileSize))
+                put("filePath", kotlinx.serialization.json.JsonPrimitive(result.filePath))
+            }.toString()
         }
 
         fun isPacketRecording(): Boolean {
             return com.tbread.packet.PacketLogger.isRecording
+        }
+
+        /** Lightweight progress snapshot — packet count & elapsed ms. */
+        fun getPacketRecordingInfo(): String {
+            return kotlinx.serialization.json.buildJsonObject {
+                put("isRecording", kotlinx.serialization.json.JsonPrimitive(com.tbread.packet.PacketLogger.isRecording))
+                put("packetCount", kotlinx.serialization.json.JsonPrimitive(com.tbread.packet.PacketLogger.currentPacketCount()))
+                put("startedAt", kotlinx.serialization.json.JsonPrimitive(com.tbread.packet.PacketLogger.currentStartedAt()))
+            }.toString()
         }
 
         fun getBattleList(): String {
