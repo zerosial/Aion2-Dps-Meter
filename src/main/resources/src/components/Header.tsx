@@ -23,7 +23,6 @@ interface Props {
   // toggleCollapse: () => void;
   className: string;
 }
-import { DungeonPopover } from "./DungeonPopover";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useMoveWindow } from "@/hooks/drag/useMoveWindow";
 
@@ -141,8 +140,6 @@ export const Header = memo(
               </span>
             )}
           </Button>
-
-          <DungeonPopover />
 
           {/* <Tooltip>
             <TooltipTrigger asChild> */}

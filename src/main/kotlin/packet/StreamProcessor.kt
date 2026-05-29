@@ -66,11 +66,6 @@ class StreamProcessor() {
     fun onPacketReceived(packet: ByteArray, arrivedAt: Long) {
         if (packet.size == 3) return
 
-        // Phase 4: OdeGroup 패킷은 최소 100바이트 이상이므로 사전 필터링
-        if (packet.size >= 100) {
-            OdeGroupParser.parseOdeGroupPacket(packet, arrivedAt, this)
-        }
-
         val epoch = DataManager.currentEpoch()
 
         val lengthInfo = readVarInt(packet)
