@@ -72,8 +72,20 @@ const clampPanelPosition = (x: number, y: number, width: number, height: number)
   };
 };
 
-const TimerBar = ({ arrivedAt, now }: { arrivedAt: number; now: number }) => {
-  const remaining = Math.max(0, TOTAL_SEC - (now - arrivedAt) / 1000);
+// Self-ticking countdown — each TimerBar runs its own 250ms interval and
+// re-renders independently. Previously the panel held a single `now` state
+// that updated every 250ms, forcing the entire JoinRequestPanel subtree
+// (header, list rows, skill settings) to re-render and stutter the hover
+// transitions. Moving the timer into each leaf component, wrapped in memo,
+// keeps the re-render scope to one tiny bar at a time.
+const TimerBar = memo(({ arrivedAt }: { arrivedAt: number }) => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, []);
+  const elapsed = (Math.max(now, arrivedAt) - arrivedAt) / 1000;
+  const remaining = Math.max(0, Math.min(TOTAL_SEC, TOTAL_SEC - elapsed));
   const pct = (remaining / TOTAL_SEC) * 100;
   const color =
     pct > 50
@@ -93,7 +105,7 @@ const TimerBar = ({ arrivedAt, now }: { arrivedAt: number; now: number }) => {
       <span className="text-shadow-meter text-xs w-6 text-right">{Math.ceil(remaining)}s</span>
     </div>
   );
-};
+});
 
 export const JoinRequestPanel = memo(() => {
   const requests = useJoinRequestStore((s) => s.requests);
@@ -104,7 +116,7 @@ export const JoinRequestPanel = memo(() => {
   const [skillSettingsOpen, setSkillSettingsOpen] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
+  // Note: removed panel-level `now` ticker — TimerBar owns its own interval.
   const { joinPanelHeight, joinPanelWidth, onMouseDownCorner } = useResizableJoinPanel();
   const tierInfoMap = useTiers(requests);
 
@@ -159,15 +171,10 @@ export const JoinRequestPanel = memo(() => {
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!rendered || requests.length === 0) return;
-    const timer = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(timer);
-  }, [rendered, requests.length]);
+  // Timer state moved into TimerBar (each row ticks independently).
+  // We no longer trigger a panel-level re-render every 250ms.
 
   const orderedRequests = useMemo(() => [...requests].reverse(), [requests]);
-  const latestArrivedAt = orderedRequests[0]?.arrivedAt ?? 0;
-  const effectiveNow = Math.max(now, latestArrivedAt);
 
   if (!rendered) return null;
 
@@ -301,7 +308,7 @@ export const JoinRequestPanel = memo(() => {
                         window.open(url, "_blank");
                       }
                     }}
-                    className={`${getClassColor(r.job ?? undefined)} p-2 px-3 rounded-lg cursor-pointer hover:brightness-110 transition-all`}
+                    className={`${getClassColor(r.job ?? undefined)} p-2 px-3 rounded-lg cursor-pointer hover:brightness-110 transition-[filter,background-color] duration-150`}
                   >
                     <div className="flex items-center gap-1">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -368,10 +375,7 @@ export const JoinRequestPanel = memo(() => {
                         )}
                       </div>
                     )}
-                    <TimerBar
-                      arrivedAt={r.arrivedAt}
-                      now={effectiveNow}
-                    />
+                    <TimerBar arrivedAt={r.arrivedAt} />
                   </div>
                 </div>
               );

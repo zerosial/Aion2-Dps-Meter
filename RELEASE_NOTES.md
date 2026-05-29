@@ -2,6 +2,12 @@
 
 > 이 빌드는 **테스트용 사전 배포본**입니다. 안정성이 검증되지 않은 변경이 포함될 수 있습니다.
 
+### Phase 1 — UI 성능/체감 개선
+
+- **전투 시간 표시 부드러워짐** — 기존엔 React가 300ms 폴링 결과로만 갱신해서 시간이 0.3초씩 점프했습니다. 이제 `CombatTimer`가 자체적으로 100ms 단위로 DOM 직접 갱신 (React 재렌더 안 거침), 폴링은 그대로 두고 시간 표시만 분리.
+- **창 드래그 lag 해결** — `useMoveWindow`의 mousemove 핸들러가 매번 javaBridge로 OS 호출하던 것을 `requestAnimationFrame` 한 프레임에 1번으로 묶음. 60~120Hz 폭격이 ~60Hz로 정리되어 드래그가 매끄럽게 추적됨.
+- **파티 요청 패널 hover 자연스러워짐** — 250ms `setInterval`이 panel 전체 컴포넌트를 250ms마다 re-render하던 것을 `TimerBar` 자식만 자체 ticker 갖도록 격리. 패널 본체 + list rows는 더 이상 timer 때문에 재렌더 안 함. `transition-all`을 `transition-[filter,background-color]`로 좁혀 hover 시 무관한 속성 transition 제거.
+
 ### 신규 — 패킷 녹화 + cielui 자동 업로드 (dev 한정)
 
 - 헤더 좌측의 **🔴 로그 기록 시작** 버튼은 `__IS_LOCAL__` 빌드(=dev 브랜치 prerelease 또는 로컬 개발)에서만 노출됩니다.

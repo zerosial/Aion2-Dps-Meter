@@ -16,6 +16,19 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
     let initialStageX = 0;
     let initialStageY = 0;
 
+    // [PERF] rAF throttle — mousemove fires 60~120Hz on most setups, and each
+    // moveWindow call goes through the JS↔JavaFX bridge into Compose stage
+    // mutation (an OS-level call). Coalescing to one call per animation frame
+    // (~16ms) eliminates the drag-time lag while staying visually fluid.
+    let pendingX = 0;
+    let pendingY = 0;
+    let rafScheduled = false;
+    const flushMove = () => {
+      rafScheduled = false;
+      const bridge = (window as any).javaBridge;
+      if (bridge?.moveWindow) bridge.moveWindow(pendingX, pendingY);
+    };
+
     const handleMouseDown = (e: globalThis.MouseEvent) => {
       const ignoreTarget = (e.target as HTMLElement).closest(
         "input, button, .settingsPanel, .detailsPanel, .console, .resizeHandle, .drag-handle",
@@ -27,7 +40,6 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
       startY = e.screenY;
       initialStageX = window.screenX;
       initialStageY = window.screenY;
-      // (window as any).javaBridge?.onDragStart(window.outerWidth, window.outerHeight);
     };
 
     const handleMouseMove = (e: globalThis.MouseEvent) => {
@@ -41,19 +53,22 @@ export const useMoveWindow = (target: string | RefObject<HTMLElement | null>) =>
         wasDraggingRef.current = true;
       }
 
-      const newX = initialStageX + deltaX;
-      const newY = initialStageY + deltaY;
-
-      (window as any).javaBridge.moveWindow(newX, newY);
-      // (window as any).javaBridge.onDragMove(newX, newY);
+      pendingX = initialStageX + deltaX;
+      pendingY = initialStageY + deltaY;
+      if (!rafScheduled) {
+        rafScheduled = true;
+        requestAnimationFrame(flushMove);
+      }
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
         if (wasDraggingRef.current) {
+          // Make sure the *final* position is sent even if mouseup landed
+          // between rAF frames.
+          if (rafScheduled) flushMove();
           setWindowPosition(window.screenX, window.screenY);
         }
-        // (window as any).javaBridge?.onDragEnd();
       }
       isDragging = false;
       setTimeout(() => {

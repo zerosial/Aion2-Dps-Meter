@@ -28,6 +28,8 @@ export default function App() {
     // reset,
     // toggleCollapse,
     battleTime,
+    battleStart,
+    battleEnd,
     formatBattleTime,
     setHistoryData,
   } = useMeter();
@@ -256,10 +258,12 @@ export default function App() {
             rowHeight={rowHeight}
           />
 
-          {battleTime && (!isMinimal || showCombatTimerInMinimal) && (
+          {(battleTime || isInCombat) && (!isMinimal || showCombatTimerInMinimal) && (
             <CombatTimer
               isInCombat={isInCombat}
-              combatTime={formatBattleTime(battleTime)}
+              battleStart={battleStart}
+              battleEnd={battleEnd}
+              fallbackTime={formatBattleTime(battleTime ?? 0)}
             />
           )}
         </div>

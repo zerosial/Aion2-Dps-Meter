@@ -14,6 +14,11 @@ interface MeterSnapshot {
   maxHp: number;
   isInCombat: boolean;
   battleTime: number | null;
+  // Epoch ms of the current battle's start/end. CombatTimer uses battleStart
+  // to compute the live elapsed time locally at 100ms cadence, decoupling
+  // the on-screen timer from the 300ms polling cycle.
+  battleStart: number | null;
+  battleEnd: number | null;
 }
 
 const initialSnapshot: MeterSnapshot = {
@@ -23,6 +28,8 @@ const initialSnapshot: MeterSnapshot = {
   maxHp: 0,
   isInCombat: false,
   battleTime: null,
+  battleStart: null,
+  battleEnd: null,
 };
 
 const isPlayerSame = (a: Player, b: Player) =>
@@ -139,6 +146,9 @@ export const useMeter = () => {
 
     const battleStart = combatData.battleStart ?? null;
     const battleEnd = combatData.battleEnd ?? null;
+    // battleTime is the *frozen* duration once combat ends. CombatTimer
+    // calculates Date.now()-battleStart locally while isInCombat=true so the
+    // live counter no longer ticks in 300ms polling steps.
     const battleTime = battleStart && battleEnd ? battleEnd - battleStart : null;
     let isInCombat = isInCombatRef.current;
 
@@ -168,6 +178,8 @@ export const useMeter = () => {
       remainHp,
       maxHp,
       battleTime,
+      battleStart,
+      battleEnd,
       isInCombat,
     });
   }, [setSnapshotIfChanged]);
@@ -254,6 +266,8 @@ export const useMeter = () => {
     targetName: snapshot.targetName,
     // isCollapse,
     battleTime: snapshot.battleTime,
+    battleStart: snapshot.battleStart,
+    battleEnd: snapshot.battleEnd,
     isInCombat: snapshot.isInCombat,
     remainHp: snapshot.remainHp,
     maxHp: snapshot.maxHp,
