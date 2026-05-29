@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - dev_phase2
 
 permissions:
   contents: write
@@ -78,10 +79,12 @@ jobs:
       with:
         files: |
           build/compose/binaries/main/msi/aion2meter4j-${{ steps.get_version.outputs.version }}.msi
-        tag_name: v${{ steps.get_version.outputs.version }}${{ github.ref == 'refs/heads/dev' && '-dev' || '' }}
-        name: Release v${{ steps.get_version.outputs.version }}${{ github.ref == 'refs/heads/dev' && '-dev' || '' }}
+        # main → vX.Y.Z (정식)  /  dev, dev_phase2, … → vX.Y.Z-dev (프리릴리즈).
+        # build.gradle.kts version만 브랜치별로 분리해 두면 tag 충돌 없음 (dev=1.7.9, dev_phase2=1.7.10).
+        tag_name: v${{ steps.get_version.outputs.version }}${{ github.ref != 'refs/heads/main' && '-dev' || '' }}
+        name: Release v${{ steps.get_version.outputs.version }}${{ github.ref != 'refs/heads/main' && '-dev' || '' }}
         body_path: RELEASE_NOTES.md
         draft: false
-        prerelease: ${{ github.ref == 'refs/heads/dev' }}
+        prerelease: ${{ github.ref != 'refs/heads/main' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
