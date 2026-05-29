@@ -60,24 +60,12 @@ bin/
 .env
 *.env
 
-<<<<<<< Updated upstream
-# Ignore sample folder
+# Sample / scratch dirs
 sample/
-
-# Ignore scratch files & native WinDivert binaries
 scratch_ingmeter/
-WinDivert.dll
-WinDivert64.sys
 
-# Ignore Local Developer Standard Guide
+# Local Developer Standard Guide (개인 문서)
 DEVELOPER_GUIDE.md
-
-=======
-
-# WinDivert runtime DLLs/sys (배포 시 동봉, repo는 깔끔 유지)
-WinDivert.dll
-WinDivert64.sys
->>>>>>> Stashed changes
 
 # WinDivert runtime DLLs/sys (배포 시 동봉, repo 깔끔 유지)
 WinDivert.dll
