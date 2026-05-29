@@ -1,35 +1,36 @@
-## v1.7.9-dev (프리릴리즈, 개발용 테스트 빌드)
+## v1.7.10-dev (프리릴리즈, Phase 2 — DPS ↔ Info 모드 자동 전환)
 
-> 이 빌드는 **테스트용 사전 배포본**입니다. 안정성이 검증되지 않은 변경이 포함될 수 있습니다.
+> **테스트용 사전 배포본**입니다. 안정성이 검증되지 않은 변경이 포함될 수 있습니다.
 
-### Phase 1 — UI 성능/체감 개선
+### 신규 — 미터기 메인 창 모드 자동 전환
 
-- **전투 시간 표시 부드러워짐** — 기존엔 React가 300ms 폴링 결과로만 갱신해서 시간이 0.3초씩 점프했습니다. 이제 `CombatTimer`가 자체적으로 100ms 단위로 DOM 직접 갱신 (React 재렌더 안 거침), 폴링은 그대로 두고 시간 표시만 분리.
-- **창 드래그 lag 해결** — `useMoveWindow`의 mousemove 핸들러가 매번 javaBridge로 OS 호출하던 것을 `requestAnimationFrame` 한 프레임에 1번으로 묶음. 60~120Hz 폭격이 ~60Hz로 정리되어 드래그가 매끄럽게 추적됨.
-- **파티 요청 패널 hover 자연스러워짐** — 250ms `setInterval`이 panel 전체 컴포넌트를 250ms마다 re-render하던 것을 `TimerBar` 자식만 자체 ticker 갖도록 격리. 패널 본체 + list rows는 더 이상 timer 때문에 재렌더 안 함. `transition-all`을 `transition-[filter,background-color]`로 좁혀 hover 시 무관한 속성 transition 제거.
+미터기가 전투 상태에 따라 두 모드를 자동으로 오갑니다:
 
-### 신규 — 패킷 녹화 + cielui 자동 업로드 (dev 한정)
+| 상태 | 메인 창 | 비고 |
+|---|---|---|
+| 전투 중 (`isInCombat=true`) | **DPS 모드** | 기존 미터 표 · 타겟 정보 · 전투 타이머 |
+| 전투 종료 직후 30초 동안 | **DPS 모드 유지** | 즉시 사라지면 후반 기록 확인 못 함 |
+| 그 외 (idle / 30초 cooldown 종료 후) | **정보 조회 모드** | 인게임에서 캐릭터 정보 조회한 결과 누적 리스트 |
+| 새 전투 시작 시점 | DPS 모드로 즉시 전환 | **정보 조회 리스트 자동 비움** |
 
-- 헤더 좌측의 **🔴 로그 기록 시작** 버튼은 `__IS_LOCAL__` 빌드(=dev 브랜치 prerelease 또는 로컬 개발)에서만 노출됩니다.
-- 시작 → 종료 사이의 모든 raw 패킷을 hex로 `logs/packet_log_<timestamp>.log` 에 누적합니다 (파서 분기 전 단계 포함).
-- 녹화 **종료** 시 결과 파일이 백그라운드 스레드에서 `cielui.com` 의 어드민 endpoint(`POST /api/admin/packet-recordings/upload`)로 자동 업로드되고, 성공하면 로컬 파일이 삭제됩니다.
-  - 인증: 미터기에 임베드된 `UPLOAD_API_KEY` (기존 `/api/logs/upload` 와 동일한 키).
-  - 업로드 메타데이터: 닉네임 · 서버명 · 미터기 버전 · 패킷 수 · 녹화 시간 · 파일 크기 · 시작/종료 epoch.
-- 새 webview 브릿지:
-  - `javaBridge.stopPacketRecording()` 이제 JSON 결과를 반환 (`{recorded, packetCount, durationMs, fileSize, filePath}`).
-  - `javaBridge.getPacketRecordingInfo()` 진행 중 실시간 상태 조회용.
-- 어드민 페이지(`cielui.com/?view=admin`) 에 "🎬 녹화된 패킷 로그" 카드 추가 — 업로드된 모든 녹화를 표로 보고 raw 다운로드.
+`useMeterMode` hook이 상태 머신을 관리합니다 (idle → 30s cooldown → info 슬라이드, isInCombat edge로 dps 즉시 복귀).
 
-### 정리
+### 정보 조회 패널 동작 규칙
 
-- 오드(Ode) 던전 실험 코드 일괄 제거 (DungeonDataManager, OdeGroupData, OdeGroupParser, DungeonPopover). `StreamProcessor.onPacketReceived` 핫패스 분기 1개 감소.
-- `WinDivert.dll`/`WinDivert64.sys` 런타임 바이너리를 `.gitignore` 에 등재.
-- 잘못된 commit에 attached되어 있던 v1.7.8-dev, v1.7.9-dev 태그 정리.
+- 인게임에서 캐릭터 정보 조회 (게임 내 인포 패킷 `0x4F 0x36`) 또는 파티 신청을 받으면 자동으로 누적됨
+- **시간 제한 없음** — 사용자가 직접 ✕ 누르거나 "전체 비우기" 누르기 전까지 유지 (파티 요청 토스트의 20초 자동 만료와 분리된 별도 store)
+- 같은 캐릭터 재조회 시 가장 최근 메타데이터로 업데이트 (전투력 · 직업)
+- 최근 조회 순으로 정렬
+- 새 전투 시작 시점에 자동 초기화
 
-### 유지된 v1.7.8 누적 분
+### 유지된 v1.7.9-dev 분
 
-- **WinDivert 커널 패킷 캡처** 모드 기본 설정 (관리자 권한 필요)
-- 인게임 캐릭터 정보보기 패킷(0x4F, 0x36) 파서 + UI 연계
-- 동시성/성능 최적화 리팩토링
-- 무스펠의 성배 신규 보스(이스카리엘, 칼드릭스) 인식
-- 비공개 캐릭터 처리 개선
+- **Phase 1 UI 성능 fix** — 전투 타이머 jank 해결 (100ms DOM 직접 갱신), 창 드래그 lag 해결 (rAF throttle), 파티 요청 패널 hover 자연스러워짐 (TimerBar 격리)
+- **패킷 녹화 + cielui 자동 업로드** (dev 한정)
+- WinDivert 커널 패킷 캡처 기본
+- 인게임 캐릭터 정보보기 패킷 파서
+- 무스펠의 성배 신규 보스 인식
+
+### 알려진 제한
+
+- 인포 패킷과 파티 요청이 같은 이벤트 채널을 공유하므로, 파티 요청을 받으면 정보 조회 리스트에도 함께 누적됩니다. 다음 버전에서 두 채널을 분리하여 정보 조회 전용 데이터만 누적하도록 다듬을 예정.

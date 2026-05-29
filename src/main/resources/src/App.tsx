@@ -2,6 +2,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useMeter } from "./hooks/useMeter";
 import type { Player, PanelType } from "@/types";
 import { MeterList } from "./components/MeterList";
+import { InfoPanel } from "./components/InfoPanel";
+import { useMeterMode } from "./hooks/useMeterMode";
+import { useInfoEntryStore } from "./stores/useInfoEntryStore";
 import { useDragUi } from "@/hooks/drag/useDragUi";
 import { Header } from "@/components/Header.tsx";
 import { TargetInfo } from "@/components/TargetInfo";
@@ -50,6 +53,11 @@ export default function App() {
   const removeRequest = useJoinRequestStore((s) => s.removeRequest);
   const clearAll = useJoinRequestStore((s) => s.clearAll);
   const refuseRequest = useJoinRequestStore((s) => s.refuseRequest);
+
+  // Phase 2 — DPS / Info 모드 자동 전환
+  const addInfoEntry = useInfoEntryStore((s) => s.addEntry);
+  const clearInfoEntries = useInfoEntryStore((s) => s.clearAll);
+  const meterMode = useMeterMode(isInCombat, clearInfoEntries);
 
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const { meterWidth, onMouseDown, isDragging } = useResizable();
@@ -177,6 +185,9 @@ export default function App() {
   useEffect(() => {
     (window as any).onJoinRequest = (data: any) => {
       addRequest(data);
+      // 동시에 InfoEntry store에도 mirror — 정보 조회/파티 요청 둘 다 일단
+      // 같은 store로 쌓고, 정보 조회 모드에서는 만료 없이 누적 표시.
+      addInfoEntry(data);
     };
     (window as any).onJoinRequestRemove = (id: number) => {
       removeRequest(id);
@@ -243,28 +254,34 @@ export default function App() {
           </div>
         )}
         <div style={{ opacity: meterListOpacity }}>
-          {players.length > 0 && (!isMinimal || showTargetInfoInMinimal) && (
-            <TargetInfo
-              targetName={targetName}
-              rowHeight={rowHeight}
-              remainHp={remainHp}
-              maxHp={maxHp}
-            />
-          )}
-          <MeterList
-            players={players}
-            selectedId={selected?.id}
-            onSelect={handleSelect}
-            rowHeight={rowHeight}
-          />
+          {meterMode === "dps" ? (
+            <>
+              {players.length > 0 && (!isMinimal || showTargetInfoInMinimal) && (
+                <TargetInfo
+                  targetName={targetName}
+                  rowHeight={rowHeight}
+                  remainHp={remainHp}
+                  maxHp={maxHp}
+                />
+              )}
+              <MeterList
+                players={players}
+                selectedId={selected?.id}
+                onSelect={handleSelect}
+                rowHeight={rowHeight}
+              />
 
-          {(battleTime || isInCombat) && (!isMinimal || showCombatTimerInMinimal) && (
-            <CombatTimer
-              isInCombat={isInCombat}
-              battleStart={battleStart}
-              battleEnd={battleEnd}
-              fallbackTime={formatBattleTime(battleTime ?? 0)}
-            />
+              {(battleTime || isInCombat) && (!isMinimal || showCombatTimerInMinimal) && (
+                <CombatTimer
+                  isInCombat={isInCombat}
+                  battleStart={battleStart}
+                  battleEnd={battleEnd}
+                  fallbackTime={formatBattleTime(battleTime ?? 0)}
+                />
+              )}
+            </>
+          ) : (
+            <InfoPanel />
           )}
         </div>
         {headerPosition === "bottom" && (
